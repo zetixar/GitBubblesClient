@@ -24,7 +24,7 @@ public class netClientMgr : MonoBehaviour {
 	public static bool gameIsRunning = false;
 	public static bool generatingLink = false;
 	//	public string serverIP = "192.168.0.2";
-	public string serverIP = "127.0.0.1";
+	public string serverIP = "52.91.177.74";// "127.0.0.1";
 	public InputField playerNickNameInputField;
 	public string playerNickName;
 
@@ -755,11 +755,11 @@ public class netClientMgr : MonoBehaviour {
 // with small square
 					//oomphs[i].localScale = new Vector3(Mathf.Sqrt(updateMsg.nodeData[i].oomph)*7.0f * 2.0f ,(Mathf.Sqrt(updateMsg.nodeData[i].oomph)*7.0f) / 2.0f,0.0f);
 				
-				if (i == myNodeIndex)
-					{
-						Debug.Log(string.Format("Max oomph: {0} currentoomph: {1} scalesize.y: {2} initMsg.nodeData[i].radius{3} oomphs[i].position{4}", (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)),
-						                        (updateMsg.nodeData[i].oomph), (Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f), initMsg.nodeData[i].radius, oomphs[i].position.y -  bubbles[i].position.y ));
-					}
+//				if (i == myNodeIndex)
+//					{
+//						Debug.Log(string.Format("Max oomph: {0} currentoomph: {1} scalesize.y: {2} initMsg.nodeData[i].radius{3} oomphs[i].position{4}", (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)),
+//						                        (updateMsg.nodeData[i].oomph), (Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f), initMsg.nodeData[i].radius, oomphs[i].position.y -  bubbles[i].position.y ));
+//					}
 
 				if(myNodeIndex != -1 && playersNameTransforms.ContainsKey(i))
 					{
