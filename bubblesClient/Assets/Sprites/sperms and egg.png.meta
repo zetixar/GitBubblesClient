@@ -1,0 +1,133 @@
+fileFormatVersion: 2
+guid: 5c2dbabd5b11cbe42aebac1a8211a4ab
+timeCreated: 1447882954
+licenseType: Free
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: sperms and egg_0
+    21300002: sperms and egg_1
+    21300004: sperms and egg_2
+    21300006: sperms and egg_3
+    21300008: sperms and egg_4
+    21300010: sperms and egg_5
+    21300012: sperms and egg_6
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  cubemapConvolution: 0
+  cubemapConvolutionSteps: 8
+  cubemapConvolutionExponent: 1.5
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 2048
+  textureSettings:
+    filterMode: -1
+    aniso: 16
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  rGBM: 0
+  compressionQuality: 50
+  allowsAlphaSplitting: 0
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: sperms and egg_0
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 60
+        width: 548
+        height: 548
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_1
+      rect:
+        serializedVersion: 2
+        x: 701
+        y: 585
+        width: 52
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_2
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 416
+        width: 50
+        height: 167
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_3
+      rect:
+        serializedVersion: 2
+        x: 827
+        y: 391
+        width: 52
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_4
+      rect:
+        serializedVersion: 2
+        x: 700
+        y: 199
+        width: 52
+        height: 58
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_5
+      rect:
+        serializedVersion: 2
+        x: 830
+        y: 222
+        width: 50
+        height: 167
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: sperms and egg_6
+      rect:
+        serializedVersion: 2
+        x: 703
+        y: 30
+        width: 50
+        height: 167
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

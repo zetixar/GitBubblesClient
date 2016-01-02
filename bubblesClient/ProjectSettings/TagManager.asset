@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - LinkClone
+  - bblClone
+  - oomphClone
+  - GoalClone
+  - LinkCloneBone
+  - PlayerName
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Minimap
+  - Textminimap
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: background
+    uniqueID: 4232654629
+    locked: 0
+  - name: aura
+    uniqueID: 2781287153
+    locked: 0
+  - name: bubbles
+    uniqueID: 638265521
+    locked: 0
+  - name: links
+    uniqueID: 2132218185
+    locked: 0
