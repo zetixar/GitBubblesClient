@@ -20,7 +20,7 @@ public class netClientMgr : MonoBehaviour {
 	public static bool initialized = false;
 	public static bool choosingNodePhase = false;
 	public static bool spectating = false;
-
+	public static bool joiningTheRuningGame = true;
 	public static bool gameIsRunning = false;
 	public static bool generatingLink = false;
 	//	public string serverIP = "192.168.0.2";
@@ -243,6 +243,8 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg.numNodes = 0;
 		gamePhaseMsg.numLinks = 0;
 		GOspinner.settingUpTheScene();
+		joiningTheRuningGame = true;
+
 	}
 
 	//called by btn in the scene
@@ -359,6 +361,13 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
 		if (gamePhaseMsg.gamePhase == 2)
 		{
+//			if(joiningTheRuningGame)
+//			{
+//				CScommon.stringMsg myname = new CScommon.stringMsg();
+//				myname.value = playerNickName;
+//				myClient.Send (CScommon.initRequestType, myname);
+//				return;
+//			}
 			gameIsRunning = true;
 			choosingNodePhase = false;
 			if (myNodeIndex == -1)
@@ -369,6 +378,7 @@ public class netClientMgr : MonoBehaviour {
 		//game is preloading or restarting, I send initRequest
 		else if (gamePhaseMsg.gamePhase == 1)
 		{	
+			joiningTheRuningGame = false;
 			miniCamera.gameObject.SetActive(true);
 
 			CScommon.stringMsg myname = new CScommon.stringMsg();
@@ -741,17 +751,24 @@ public class netClientMgr : MonoBehaviour {
 				//** oomph position
 //				oomphs[i].position = bubbles[i].position;
 				oomphs[i].position = new Vector2 (bubbles[i].position.x, 
-					                                  bubbles[i].position.y + (initMsg.nodeData[i].radius));// + (Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f));
+					                                  bubbles[i].position.y);// + (initMsg.nodeData[i].radius));// + (Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f));
 ////// I do rotation in prepare for initializion
-				//** oomph radius and scale
-/////					float oomphRadius = initMsg.nodeData[i].radius *
-/////						( 1.0f + ((updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L))) * 4.0f));
-/////				oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
-//				oomphs[i].localScale = new Vector3(initMsg.nodeData[i].radius *nodeSclaeFactor * 3.0f ,initMsg.nodeData[i].radius *nodeSclaeFactor * 3.0f,0.0f);
 
-				oomphs[i].localScale = new Vector3( Mathf.Sqrt(updateMsg.nodeData[i].oomph) * 2f// * 2f / 16.0f) 
-				                                   ,Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f// * 2f / 16.0f))
-				                                   ,0.0f);
+
+//** oomph radius and scale
+//				float oomphRadius = initMsg.nodeData[i].radius *
+//						( 1.0f + ((updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L))) * 4.0f));				oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
+				float oomphRadius = initMsg.nodeData[i].radius *
+					(updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)));
+					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
+
+//rectangle oompsh using small square
+//				oomphs[i].localScale = new Vector3( Mathf.Sqrt(updateMsg.nodeData[i].oomph) * 2f// * 2f / 16.0f) 
+//				                                   ,Mathf.Sqrt(updateMsg.nodeData[i].oomph) / 2f// * 2f / 16.0f))
+//				                                   ,0.0f);
+
+
+
 // with small square
 					//oomphs[i].localScale = new Vector3(Mathf.Sqrt(updateMsg.nodeData[i].oomph)*7.0f * 2.0f ,(Mathf.Sqrt(updateMsg.nodeData[i].oomph)*7.0f) / 2.0f,0.0f);
 				
