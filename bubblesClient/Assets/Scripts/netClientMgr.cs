@@ -211,23 +211,29 @@ public class netClientMgr : MonoBehaviour {
 			myClient.Disconnect();
 			backToChooseServerPhase();
 		}
-		if(Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.R) && myClient != null && myClient.isConnected)
-		{
-			CScommon.intMsg gameNum = new CScommon.intMsg();
-			gameNum.value = 1;
-			myClient.Send(CScommon.restartMsgType, gameNum);
-		}
-		if(Input.GetKey(KeyCode.RightShift) && Input.GetKeyDown(KeyCode.P) && myClient != null && myClient.isConnected)
-		{
-			CScommon.intMsg pauseGame = new CScommon.intMsg();
-			pauseGame.value = 0;
-			myClient.Send(CScommon.restartMsgType, pauseGame);
-		}
+		controllingServerViaClient();
 		if (initialized)
-
 		GOspinner.Update ();
 //#elif UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE
 //#endif
+	}
+	void controllingServerViaClient()
+	{
+		if(Input.GetKey(KeyCode.RightShift) && myClient != null && myClient.isConnected)
+		{
+			CScommon.intMsg gameNum = new CScommon.intMsg();
+			gameNum.value = -10;
+			if(Input.GetKeyDown(KeyCode.P))gameNum.value = 0; // pauseing game
+			if(Input.GetKeyDown(KeyCode.Alpha1)){ gameNum.value = 1; //choosing #1 or restarting the game
+				Debug.Log("n1Pressed");}
+			if(Input.GetKeyDown(KeyCode.Alpha2)) gameNum.value = 2; //choosing #2 or restarting the game
+			if(Input.GetKeyDown(KeyCode.Alpha3)) gameNum.value = 3; //choosing #3 or restarting the game
+			if(Input.GetKeyDown(KeyCode.Alpha4)) gameNum.value = 4; //choosing #4 or restarting the game
+			if(Input.GetKeyDown(KeyCode.Alpha8)) gameNum.value = 8; //choosing #8 or restarting the game
+			if(Input.GetKeyDown(KeyCode.Alpha9)) gameNum.value = 9; //choosing #9 or restarting the game
+			if(gameNum.value != -10)
+			myClient.Send(CScommon.restartMsgType, gameNum);
+		}
 	}
 
 	public void backToChooseServerPhase()
@@ -361,13 +367,13 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
 		if (gamePhaseMsg.gamePhase == 2)
 		{
-//			if(joiningTheRuningGame)
-//			{
-//				CScommon.stringMsg myname = new CScommon.stringMsg();
-//				myname.value = playerNickName;
-//				myClient.Send (CScommon.initRequestType, myname);
-//				return;
-//			}
+			if(joiningTheRuningGame)
+			{
+				CScommon.stringMsg myname = new CScommon.stringMsg();
+				myname.value = playerNickName;
+				myClient.Send (CScommon.initRequestType, myname);
+				return;
+			}
 			gameIsRunning = true;
 			choosingNodePhase = false;
 			if (myNodeIndex == -1)
