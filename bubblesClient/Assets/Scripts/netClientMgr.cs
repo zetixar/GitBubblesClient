@@ -223,16 +223,9 @@ public class netClientMgr : MonoBehaviour {
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
-			if(Input.GetKeyDown(KeyCode.P))gameNum.value = 0; // pauseing game
-			if(Input.GetKeyDown(KeyCode.Alpha1)){ gameNum.value = 1; //choosing #1 or restarting the game
-				Debug.Log("n1Pressed");}
-			if(Input.GetKeyDown(KeyCode.Alpha2)) gameNum.value = 2; //choosing #2 or restarting the game
-			if(Input.GetKeyDown(KeyCode.Alpha3)) gameNum.value = 3; //choosing #3 or restarting the game
-			if(Input.GetKeyDown(KeyCode.Alpha4)) gameNum.value = 4; //choosing #4 or restarting the game
-			if(Input.GetKeyDown(KeyCode.Alpha8)) gameNum.value = 8; //choosing #8 or restarting the game
-			if(Input.GetKeyDown(KeyCode.Alpha9)) gameNum.value = 9; //choosing #9 or restarting the game
+			for(int i = 0; i <10; i++)if (Input.GetKeyDown(""+i))gameNum.value = i;
 			if(gameNum.value != -10)
-			myClient.Send(CScommon.restartMsgType, gameNum);
+				myClient.Send(CScommon.restartMsgType, gameNum);
 		}
 	}
 
@@ -367,6 +360,7 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
 		if (gamePhaseMsg.gamePhase == 2)
 		{
+			Debug.Log ("gamephase2 recieved");
 			if(joiningTheRuningGame)
 			{
 				CScommon.stringMsg myname = new CScommon.stringMsg();
@@ -384,6 +378,8 @@ public class netClientMgr : MonoBehaviour {
 		//game is preloading or restarting, I send initRequest
 		else if (gamePhaseMsg.gamePhase == 1)
 		{	
+			Debug.Log ("gamephase1 recieved");
+
 			joiningTheRuningGame = false;
 			miniCamera.gameObject.SetActive(true);
 
@@ -764,8 +760,14 @@ public class netClientMgr : MonoBehaviour {
 //** oomph radius and scale
 //				float oomphRadius = initMsg.nodeData[i].radius *
 //						( 1.0f + ((updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L))) * 4.0f));				oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
-				float oomphRadius = initMsg.nodeData[i].radius *
-					(updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)));
+
+
+
+//				float oomphRadius = initMsg.nodeData[i].radius *
+//					(updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)));
+//					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
+
+					float oomphRadius = initMsg.nodeData[i].radius * Mathf.Pow(updateMsg.nodeData[i].oomph/(CScommon.maxOomph (initMsg.nodeData[i].radius,0L)),0.5f);
 					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
 
 //rectangle oompsh using small square
