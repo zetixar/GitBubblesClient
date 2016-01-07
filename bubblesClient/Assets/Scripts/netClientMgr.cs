@@ -221,8 +221,15 @@ public class netClientMgr : MonoBehaviour {
 	{
 		if(Input.GetKey(KeyCode.RightShift) && myClient != null && myClient.isConnected)
 		{
+
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
+			if(Input.GetKeyDown(KeyCode.H)) gameNum.value = 21;
+			if(Input.GetKeyDown(KeyCode.J)) 
+			{
+				gameNum.value = 22;
+				Debug.Log("J Pressed");
+			}
 			for(int i = 0; i <10; i++)if (Input.GetKeyDown(""+i))gameNum.value = i;
 			if(gameNum.value != -10)
 				myClient.Send(CScommon.restartMsgType, gameNum);
@@ -278,7 +285,7 @@ public class netClientMgr : MonoBehaviour {
 		{
 			GUI.Label (new Rect (2, 10, 150, 100), "KeyGuid (K)");
 			if (Input.GetKey (KeyCode.K))
-			GUI.Label (new Rect (2, 25, 300, 400),
+			GUI.Label (new Rect (2, 25, 320, 600),
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
 		           "Z: zoom in\n" +
@@ -305,6 +312,10 @@ public class netClientMgr : MonoBehaviour {
 				   "T: inchworm going forward\n" +
 				   "G: inchworm reverse\n" +
 				   "B: inchworm forward/reverse toggle\n\n" +
+
+				   "\nMOVESPEED\n"+
+				   "Semicolon: speed up\n"+
+				   "Quote: speed down\n\n"+
 
 				   "L: disconnect");
 		}
@@ -360,14 +371,13 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
 		if (gamePhaseMsg.gamePhase == 2)
 		{
-			Debug.Log ("gamephase2 recieved");
 			if(joiningTheRuningGame)
-			{
-				CScommon.stringMsg myname = new CScommon.stringMsg();
-				myname.value = playerNickName;
-				myClient.Send (CScommon.initRequestType, myname);
-				return;
-			}
+//			{
+//				CScommon.stringMsg myname = new CScommon.stringMsg();
+//				myname.value = playerNickName;
+//				myClient.Send (CScommon.initRequestType, myname);
+//				return;
+//			}
 			gameIsRunning = true;
 			choosingNodePhase = false;
 			if (myNodeIndex == -1)
@@ -708,7 +718,6 @@ public class netClientMgr : MonoBehaviour {
 					 bubbles[linkInfo.linkData.targetId].position)/2;
 
 //public static float rawStrength(float oomph, float maxOomph, long dna, float radiusSquared, float linkLengthSquared)
-
 			links[linkInfo.linkId].transform.localScale = new Vector3(
 /*vectore3.x*/		((CScommon.rawStrength
 					(updateMsg.nodeData[linkInfo.linkData.sourceId].oomph,
@@ -719,6 +728,7 @@ public class netClientMgr : MonoBehaviour {
 					* linkscalefactor,
 /*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 1.2f,
 /*vectore3.z*/		0.0f);
+
 
 			links[linkInfo.linkId].transform.LookAt(bubbles[linkInfo.linkData.targetId].transform);
 			links[linkInfo.linkId].transform.Rotate(0.0f,90.0f,90.0f);
@@ -767,8 +777,10 @@ public class netClientMgr : MonoBehaviour {
 //					(updateMsg.nodeData[i].oomph / (CScommon.maxOomph (initMsg.nodeData[i].radius,0L)));
 //					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
 
-					float oomphRadius = initMsg.nodeData[i].radius * Mathf.Pow(updateMsg.nodeData[i].oomph/(CScommon.maxOomph (initMsg.nodeData[i].radius,0L)),0.5f);
-					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius *nodeSclaeFactor ,0.0f);
+					float oomphRadius = initMsg.nodeData[i].radius *
+										Mathf.Pow(updateMsg.nodeData[i].oomph
+						          		/(CScommon.maxOomph (initMsg.nodeData[i].radius,0L)),0.5f);
+					oomphs[i].localScale = new Vector3(oomphRadius *nodeSclaeFactor ,oomphRadius * nodeSclaeFactor ,0.0f);
 
 //rectangle oompsh using small square
 //				oomphs[i].localScale = new Vector3( Mathf.Sqrt(updateMsg.nodeData[i].oomph) * 2f// * 2f / 16.0f) 
@@ -951,6 +963,15 @@ public class netClientMgr : MonoBehaviour {
 			cameraMover ();
 			positioning ();
 			updateLinksPosRotScale();
+
+			if (Input.GetKeyDown(KeyCode.Semicolon))
+			{
+				MusSpeedController(20);
+			}
+			if (Input.GetKeyDown(KeyCode.Quote))
+			{
+				MusSpeedController(-20);
+			}
 			//Requesting to make push internal link for my inchworm
 			if (Input.GetKeyDown(KeyCode.R))
 			{
@@ -1019,6 +1040,21 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
+		static int myInternalMusSpeed = 80;
+		//static int myExternalMusSpeed = 80;
+
+		static void MusSpeedController(int increaseOrDecreaseSpeed)
+		{
+			CScommon.intMsg myDesiredSpeed= new CScommon.intMsg();
+
+			if (0 < myInternalMusSpeed && myInternalMusSpeed < 300)	myInternalMusSpeed += increaseOrDecreaseSpeed;
+			else myInternalMusSpeed = 80;
+
+			myDesiredSpeed.value = myInternalMusSpeed;
+			myClient.Send (CScommon.speedMsgType, myDesiredSpeed);
+			Debug.Log ("My Internal Mus Speed: " + myInternalMusSpeed);
+		}
+	
 		static bool cameraFollowMynode = false;
 		static float mainCamMoveSpeed = 3.0f;
 //** need to clamp the camera so it cannot go over up/down/right/left.

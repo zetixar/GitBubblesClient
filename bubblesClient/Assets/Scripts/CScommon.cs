@@ -25,6 +25,7 @@ public static class CScommon {
 	public const short linksMsgType = 315; //linksMsg
 	public const short restartMsgType = 316; //  //intMsg, sent from client to restart server, 
 	//value determines which game is launched, currently there is only one (game 1)
+	public const short speedMsgType = 317; //intMsg, sent from client to change percent (0 to 300) of it's muscles demand
 
 
 //  Summary of messagery:
@@ -145,7 +146,6 @@ public static class CScommon {
 	private static float distance2(Vector2 source, Vector2 target){
 		return (target.x-source.x)*(target.x-source.x) + (target.y-source.y)*(target.y-source.y);
 	}
-
 	// Returns a number between 0 and 1, the efficiency of a relationship between two nodes.
 	// Efficiency is a function of the distance between the two nodes AND the source's radius--so efficiency is NOT symmetric.
 	public static float efficiency(float distanceSquared, float sourceRadiusSquared){
@@ -181,7 +181,6 @@ public static class CScommon {
 	public static float rawStrength(float oomph, float maxOomph, long dna, float radiusSquared , float linkLengthSquared){
 		return metabolicOutput(oomph, maxOomph, dna)*efficiency(linkLengthSquared,radiusSquared);
 	}
-
 
 
 	//dna
