@@ -221,18 +221,19 @@ public class netClientMgr : MonoBehaviour {
 	{
 		if(Input.GetKey(KeyCode.RightShift) && myClient != null && myClient.isConnected)
 		{
-
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
-			if(Input.GetKeyDown(KeyCode.H)) gameNum.value = 21;
-			if(Input.GetKeyDown(KeyCode.J)) 
-			{
-				gameNum.value = 22;
-				Debug.Log("J Pressed");
-			}
-			for(int i = 0; i <10; i++)if (Input.GetKeyDown(""+i))gameNum.value = i;
-			if(gameNum.value != -10)
+			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
+			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 22;
+			if(Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 31;
+			if(Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 32;
+
+			for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
+
+			if(gameNum.value != -10){
 				myClient.Send(CScommon.restartMsgType, gameNum);
+				Debug.Log("gamenum.value: " +gameNum.value);
+			}
 		}
 	}
 
@@ -1039,9 +1040,9 @@ public class netClientMgr : MonoBehaviour {
 		static void MusSpeedController(int increaseOrDecreaseSpeed)
 		{
 			CScommon.intMsg myDesiredSpeed= new CScommon.intMsg();
-
-			if (0 < myInternalMusSpeed && myInternalMusSpeed < 300)	myInternalMusSpeed += increaseOrDecreaseSpeed;
-			else myInternalMusSpeed = 80;
+			myInternalMusSpeed += increaseOrDecreaseSpeed;
+			if (0 > myInternalMusSpeed)	myInternalMusSpeed = 0;
+			if (myInternalMusSpeed > 300) myInternalMusSpeed = 300;
 
 			myDesiredSpeed.value = myInternalMusSpeed;
 			myClient.Send (CScommon.speedMsgType, myDesiredSpeed);
