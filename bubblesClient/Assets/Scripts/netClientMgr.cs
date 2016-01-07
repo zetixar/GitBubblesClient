@@ -371,7 +371,7 @@ public class netClientMgr : MonoBehaviour {
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
 		if (gamePhaseMsg.gamePhase == 2)
 		{
-			if(joiningTheRuningGame)
+//			if(joiningTheRuningGame)
 //			{
 //				CScommon.stringMsg myname = new CScommon.stringMsg();
 //				myname.value = playerNickName;
@@ -990,7 +990,6 @@ public class netClientMgr : MonoBehaviour {
 			{
 				InversInchwomrsLink(3);
 			}
-
 			//forward
 			if (Input.GetKeyDown(KeyCode.T))
 			{
@@ -1005,17 +1004,14 @@ public class netClientMgr : MonoBehaviour {
 			{
 				inchwormForwardBackWard(2);
 			}
-
 			if (Input.GetKeyDown(KeyCode.F7))
 			{
 				displayNames++;
 				if (displayNames > 3) displayNames = 0;
 				changeHowToDisPlayPlayersName();
-
 			}
 			if (!gameIsRunning || myNodeIndex < 0) return;
 			requestLinktoTarget ();
-
 
 			if (Input.GetKeyDown(KeyCode.U))
 			{
@@ -1032,8 +1028,6 @@ public class netClientMgr : MonoBehaviour {
 				myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 				Debug.Log ("Turn to Right");
 			}
-		
-
 			if(Input.GetMouseButtonDown (1))
 			{
 				requestToRotateMe();
@@ -1042,7 +1036,6 @@ public class netClientMgr : MonoBehaviour {
 
 		static int myInternalMusSpeed = 80;
 		//static int myExternalMusSpeed = 80;
-
 		static void MusSpeedController(int increaseOrDecreaseSpeed)
 		{
 			CScommon.intMsg myDesiredSpeed= new CScommon.intMsg();
