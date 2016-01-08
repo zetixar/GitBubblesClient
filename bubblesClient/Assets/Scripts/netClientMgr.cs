@@ -217,25 +217,44 @@ public class netClientMgr : MonoBehaviour {
 //#elif UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE
 //#endif
 	}
+	public static bool gameIsWaitingForStartFire = true;
 	void controllingServerViaClient()
 	{
+
+		if (gameIsWaitingForStartFire && Input.GetKeyDown(KeyCode.H))
+		{
+			CScommon.intMsg gameNum = new CScommon.intMsg();
+			gameNum.value = 0;
+			myClient.Send(CScommon.restartMsgType, gameNum);
+			gameIsWaitingForStartFire = false;
+		}
+
+
 		if(Input.GetKey(KeyCode.RightShift) && myClient != null && myClient.isConnected)
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
-			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
-			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 22;
-			if(Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 31;
-			if(Input.GetKey(KeyCode.RightControl) && Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 32;
-
+			if(Input.GetKeyDown(KeyCode.BackQuote)) gameNum.value = -1;
 			for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
+			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
+			if(Input.GetKeyDown(KeyCode.Minus) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 22;
+			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 31;
+			if(Input.GetKeyDown(KeyCode.Equals) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 32;
+			if(Input.GetKeyDown(KeyCode.LeftBracket)) gameNum.value = 41;
+			if(Input.GetKeyDown(KeyCode.LeftBracket) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 42;
+			if(Input.GetKeyDown(KeyCode.RightBracket)) gameNum.value = 51;
+			if(Input.GetKeyDown(KeyCode.RightBracket) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 52;
+			if(Input.GetKeyDown(KeyCode.Backslash))gameNum.value = 61;
+			if(Input.GetKeyDown(KeyCode.Backslash) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 62;
 
-			if(gameNum.value != -10){
+			if(gameNum.value != -10)
+			{
 				myClient.Send(CScommon.restartMsgType, gameNum);
 				Debug.Log("gamenum.value: " +gameNum.value);
 			}
 		}
 	}
+
 
 	public void backToChooseServerPhase()
 	{
@@ -287,6 +306,9 @@ public class netClientMgr : MonoBehaviour {
 			GUI.Label (new Rect (2, 10, 150, 100), "KeyGuid (K)");
 			if (Input.GetKey (KeyCode.K))
 			GUI.Label (new Rect (2, 25, 320, 600),
+
+				   "\nH: start the game\n\n"+
+
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
 		           "Z: zoom in\n" +
@@ -318,7 +340,10 @@ public class netClientMgr : MonoBehaviour {
 				   "Semicolon: speed up\n"+
 				   "Quote: speed down\n\n"+
 
-				   "L: disconnect");
+				   "L: disconnect\n\n\n" +
+
+				   "SERVER CONTROLS\n" +
+				   "backQuote, numbers, minus, equals, LR brackets, backslash -+ RightCtrl");
 		}
 	} 
 
@@ -385,6 +410,7 @@ public class netClientMgr : MonoBehaviour {
 				spectating = true;
 			else
 				spectating = false;
+			gameIsWaitingForStartFire = false;
 		}
 		//game is preloading or restarting, I send initRequest
 		else if (gamePhaseMsg.gamePhase == 1)
@@ -404,6 +430,7 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.cleanScene ();
 			//Allocating bubbles,links,oomphs etc. & MynodeIndex = -1
 			GOspinner.settingUpTheScene();
+			gameIsWaitingForStartFire = true;
 		}
 	}
 
