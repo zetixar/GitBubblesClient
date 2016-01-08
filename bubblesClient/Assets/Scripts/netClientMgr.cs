@@ -217,7 +217,19 @@ public class netClientMgr : MonoBehaviour {
 //#elif UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE
 //#endif
 	}
+
+	// value 0 is the exception, it pauses/unpauses current game without restarting it.
+	// value -1 relaunches the current game, without changing current scale values.
+	// Values 1-9 select a particular predefined game setup to be launched with its default scale values.
+	// Other values scale and restart the current game:
+	// 21/22 scale down/up the average size (radius) of nodes, 
+	// 31/32 scale down/up the ratio between the size of hunter organisms and the size of other organisms,
+	// 41/42 scale down/up photoYield, the rate energy trickles into everyone's tanks, i.e. the 'starved' speed of everything
+	// 51/52 scale down/up baseMetabolicRate, the base rate at which muscles consume energy, i.e. the 'fed' speed of everything
+	// 61/62 scale down/up the worldRadius (which scales up/down the relative lengths of links in the world, i.e. the size of organisms )
+
 	public static bool gameIsWaitingForStartFire = true;
+
 	void controllingServerViaClient()
 	{
 
@@ -237,15 +249,15 @@ public class netClientMgr : MonoBehaviour {
 			if(Input.GetKeyDown(KeyCode.BackQuote)) gameNum.value = -1;
 			for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
 			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
-			if(Input.GetKeyDown(KeyCode.Minus) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 22;
+			if(Input.GetKeyDown(KeyCode.Minus)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 22;
 			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 31;
-			if(Input.GetKeyDown(KeyCode.Equals) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 32;
+			if(Input.GetKeyDown(KeyCode.Equals)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 32;
 			if(Input.GetKeyDown(KeyCode.LeftBracket)) gameNum.value = 41;
-			if(Input.GetKeyDown(KeyCode.LeftBracket) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 42;
+			if(Input.GetKeyDown(KeyCode.LeftBracket)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 42;
 			if(Input.GetKeyDown(KeyCode.RightBracket)) gameNum.value = 51;
-			if(Input.GetKeyDown(KeyCode.RightBracket) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 52;
-			if(Input.GetKeyDown(KeyCode.Backslash))gameNum.value = 61;
-			if(Input.GetKeyDown(KeyCode.Backslash) && Input.GetKey(KeyCode.RightControl)) gameNum.value = 62;
+			if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 52;
+			if(Input.GetKeyDown(KeyCode.Backslash)) gameNum.value = 61;
+			if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 62;
 
 			if(gameNum.value != -10)
 			{
@@ -304,6 +316,7 @@ public class netClientMgr : MonoBehaviour {
 	if (myClient != null && myClient.isConnected) 
 		{
 			GUI.Label (new Rect (2, 10, 150, 100), "KeyGuid (K)");
+
 			if (Input.GetKey (KeyCode.K))
 			GUI.Label (new Rect (2, 25, 320, 600),
 
@@ -344,6 +357,29 @@ public class netClientMgr : MonoBehaviour {
 
 				   "SERVER CONTROLS\n" +
 				   "backQuote, numbers, minus, equals, LR brackets, backslash -+ RightCtrl");
+
+			if (Input.GetKey (KeyCode.RightControl))
+				GUI.Label (new Rect (2, 25, 500, 600),
+		           "Minus:\n"+ 
+		           "scale down/up the average size (radius) of nodes\n\n" +
+
+		           "Equals:\n"+
+		           "scale down/up the ratio between the size of hunter organisms and the size of other organisms\n\n" +
+
+		           "LeftBracket:\n"+
+		           "scale down/up photoYield, the rate energy trickles into everyone's tanks,\n"+
+		           "i.e. the 'starved' speed of everything\n\n" +
+
+		           "RightBracket:\n"+ 
+					"scale down/up baseMetabolicRate, the base rate at which muscles consume energy,\n" +
+					"i.e. the 'fed' speed of everything\n\n" +
+
+		           "Backslash:\n"+
+		           "scale down/up the worldRadius (which scales up/down the relative lengths of links in the world,\n" +
+		           "i.e. the size of organisms\n\n"+
+
+		           "BackQuote:\n"+
+		           "relaunches the current game, without changing current scale values");
 		}
 	} 
 
