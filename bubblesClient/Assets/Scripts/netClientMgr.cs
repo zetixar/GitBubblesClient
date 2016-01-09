@@ -40,6 +40,13 @@ public class netClientMgr : MonoBehaviour {
 	public Button serverIP192ConnectButton;
 	public GameObject scrollViewForScaling;
 	public Text scrollViewTextDebuging;
+	public Text scrollViewDisplayAllChat;
+	private List<string> chatHistory = new List<string>();
+	private List<string> debugingDisplayHistroy = new List<string>();
+	public Button sendChatButton;
+	public InputField myChatInputField;
+	public GameObject scrollViewForChat;
+
 
 
 
@@ -91,7 +98,11 @@ public class netClientMgr : MonoBehaviour {
 		}
 		controllingServerViaClient();
 		if (initialized)
-		GOspinner.Update ();
+		{
+			if(Input.GetKeyDown(KeyCode.C))
+				displayChatWindows(!displayingChatwindowsstatus);
+			GOspinner.Update ();
+		}
 //#elif UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE
 //#endif
 	}
@@ -183,8 +194,11 @@ public class netClientMgr : MonoBehaviour {
 	//Showing Msg in scrollview in playmode
 	public void debugingDesplayinScrollView(string text)
 	{
-		scrollViewTextDebuging.text += "\n" + text;
-
+		debugingDisplayHistroy.Add(text);
+		scrollViewTextDebuging.text = "";// if I don't do this what will happen?
+		for (int i = debugingDisplayHistroy.Count; i > 0; i--)
+			scrollViewTextDebuging.text += debugingDisplayHistroy[i-1] + "\n";
+//		scrollViewTextDebuging.text += "\n" + text;
 	}
 
 	//Audio
@@ -209,6 +223,7 @@ public class netClientMgr : MonoBehaviour {
 			GUI.Label (new Rect (2, 25, 320, 600),
 
 				   "\nH: start the game\n"+
+		           "C: turn off/on chat windows\n" +
 
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
@@ -317,6 +332,9 @@ public class netClientMgr : MonoBehaviour {
 		initialized = false;
 		eligibleToControlServer = false;
 		audioSourceTurning.Play();
+		debugingDisplayHistroy = new List<string>();
+		chatHistory = new List<string>();
+		displayChatWindows(true);
 	}
 
 	public void OnDisconnectC(NetworkMessage info)
@@ -427,8 +445,15 @@ public class netClientMgr : MonoBehaviour {
 
 	public void onBroadCastMsgType(NetworkMessage netMsg)
 	{
-		
+		CScommon.stringMsg recievedNewChat = netMsg.ReadMessage<CScommon.stringMsg>();
+		chatHistory.Add(recievedNewChat.value);
+		Debug.Log (chatHistory.Count + "chathistorycount");
+		scrollViewDisplayAllChat.text = "";// if I don't do this what will happen?
+		for (int i = chatHistory.Count; i > 0; i--)
+			scrollViewDisplayAllChat.text += chatHistory[i-1] + "\n";
+		displayChatWindows(true);
 	}
+
 	public void onScaleMsgType(NetworkMessage netMsg)
 	{
 		string scaleString = netMsg.ReadMessage<CScommon.stringMsg>().value;
@@ -443,6 +468,16 @@ public class netClientMgr : MonoBehaviour {
 		myClient.Send (CScommon.broadCastMsgType, myChatStringMsg);
 		Debug.Log ("my chat sent");
 		playerChatInputField.text = string.Empty;
+		myChatString = string.Empty;
+	}
+
+	private static bool displayingChatwindowsstatus = false;
+	private void displayChatWindows(bool show)
+	{
+		sendChatButton.gameObject.SetActive(show);
+		myChatInputField.gameObject.SetActive(show);
+		scrollViewForChat.gameObject.SetActive(show);
+		displayingChatwindowsstatus = show;
 	}
 
 //GOSPINNER *************************************** GOSPINNER\\ 
