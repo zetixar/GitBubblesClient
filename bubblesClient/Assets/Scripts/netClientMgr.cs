@@ -23,12 +23,19 @@ public class netClientMgr : MonoBehaviour {
 	public static bool joiningTheRuningGame = true;
 	public static bool gameIsRunning = false;
 	public static bool generatingLink = false;
-	//	public string serverIP = "192.168.0.2";
-	public string serverIP = "52.91.177.74";// "127.0.0.1";
-	public InputField playerNickNameInputField;
-	public string playerNickName;
 
 	public InputField serverIPInputField;
+//	public string serverIP = "192.168.0.2";
+	public string serverIP = "52.91.177.74";// "127.0.0.1";
+	public InputField playerNickNameInputField;
+	private string playerNickName;
+
+	public InputField playerChatInputField;
+	private string myChatString;
+
+	//add textholder for displaying chats.
+	private string playersChats;
+
 	public Button serverIPConnectButton;
 	public Button serverIP192ConnectButton;
 	public GameObject scrollViewForScaling;
@@ -52,138 +59,6 @@ public class netClientMgr : MonoBehaviour {
 
 	public Camera miniCamera;
 
-
-
-//	List<MatchDesc> matchList = new List<MatchDesc>();
-//	bool matchCreated;
-//	NetworkMatch networkMatch;
-//
-//	MatchInfo matchinfo;
-
-//
-//
-//	void Awake()
-//	{
-//		networkMatch = gameObject.AddComponent<NetworkMatch>();
-//	}
-//	
-//	void OnGUI()
-//	{
-//		// You would normally not join a match you created yourself but this is possible here for demonstration purposes.
-//		if(GUILayout.Button("Create Room"))
-//		{
-//			CreateMatchRequest create = new CreateMatchRequest();
-//			create.name = "NewRoom";
-//			create.size = 4;
-//			create.advertise = true;
-//			create.password = "";
-//			
-//			networkMatch.CreateMatch(create, OnMatchCreate);
-//		}
-//		
-//		if (GUILayout.Button("List rooms"))
-//		{
-//			networkMatch.ListMatches(0, 20, "", OnMatchList);
-//		}
-//		
-//		if (matchList.Count > 0)
-//		{
-//			GUILayout.Label("Current rooms");
-//		}
-//		foreach (var match in matchList)
-//		{
-//			if (GUILayout.Button(match.name))
-//			{
-//				networkMatch.JoinMatch(match.networkId, "", OnMatchJoined);
-//			}
-//		}
-//	}
-//	
-//	public void OnMatchCreate(CreateMatchResponse matchResponse)
-//	{
-//		if (matchResponse.success)
-//		{
-//			Debug.Log("Create match succeeded");
-//			matchCreated = true;
-//			Utility.SetAccessTokenForNetwork(matchResponse.networkId, new NetworkAccessToken(matchResponse.accessTokenString));
-//			NetworkServer.Listen(new MatchInfo(matchResponse), 9000);
-//		}
-//		else
-//		{
-//			Debug.LogError ("Create match failed");
-//		}
-//	}
-//	
-//	public void OnMatchList(ListMatchResponse matchListResponse)
-//	{
-//		if (matchListResponse.success && matchListResponse.matches != null)
-//		{
-//			networkMatch.JoinMatch(matchListResponse.matches[0].networkId, "", OnMatchJoined);
-//		}
-//	}
-//	
-//	public void OnMatchJoined(JoinMatchResponse matchJoin)
-//	{
-//		if (matchJoin.success)
-//		{
-//			Debug.Log("Join match succeeded");
-//			if (matchCreated)
-//			{
-//				Debug.LogWarning("Match already set up, aborting...");
-//				return;
-//			}
-//
-//			Utility.SetAccessTokenForNetwork(matchJoin.networkId, new NetworkAccessToken(matchJoin.accessTokenString));
-//			myNodeIndex = -1;
-//			myClient = new NetworkClient();
-//			Debug.Log ("Registering client callbacks");
-//			myClient.RegisterHandler(MsgType.Connect, OnConnectedC);
-//			//these two never get called because I haven't implemented the server disconnecting a client yet.
-//			//They are irrelevant to current functioning.
-//			myClient.RegisterHandler(MsgType.Disconnect, OnDisconnectC);
-//			//myClient.RegisterHandler(MsgType.Error, OnErrorC);
-//			myClient.RegisterHandler (CScommon.gamePhaseMsgType, onGamePhaseMsg);
-//			myClient.RegisterHandler(CScommon.initMsgType, onInitMsg);
-//			myClient.RegisterHandler(CScommon.nodeIdMsgType, onNodeIDMsg);
-//			myClient.RegisterHandler (CScommon.requestNodeIdMsgType, onAssignedMyNodeID);
-//			myClient.RegisterHandler (CScommon.initRevisionMsgType, onInitRevisionMsg);
-//			myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
-//			myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
-//			myClient.RegisterHandler (CScommon.nameNodeIdMsgType, onNameNodeIdMsg);
-//			myClient.Connect(new MatchInfo(matchJoin));
-////			myClient.Connect(serverIP, CScommon.serverPort);
-//			audioSourceBeepSelectNodeForLink.Play ();
-//		}
-//		else
-//		{
-//			Debug.LogError("Join match failed");
-//		}
-//	}
-//	
-//	public void OnConnected(NetworkMessage msg)
-//	{
-//		Debug.Log("Connected!");
-//	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	void Start()
 	{
 		serverIPInputField.placeholder.GetComponent<Text>().text = serverIP;
@@ -206,6 +81,8 @@ public class netClientMgr : MonoBehaviour {
 			playerNickName = playerNickNameInputField.text;
 			return;
 		}
+		if (playerChatInputField.text != string.Empty)
+			myChatString = playerChatInputField.text;
 //		if (isAtStartup && Input.GetKeyDown(KeyCode.C)) SetupClient();
 		if (Input.GetKeyDown (KeyCode.L) && myClient != null && myClient.isConnected) 
 		{
@@ -228,6 +105,8 @@ public class netClientMgr : MonoBehaviour {
 	// 41/42 scale down/up photoYield, the rate energy trickles into everyone's tanks, i.e. the 'starved' speed of everything
 	// 51/52 scale down/up baseMetabolicRate, the base rate at which muscles consume energy, i.e. the 'fed' speed of everything
 	// 61/62 scale down/up the worldRadius (which scales up/down the relative lengths of links in the world, i.e. the size of organisms )
+	// 71/72 move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to veg nodes before launch
+	// 81/82 move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to nonveg nodes before launch
 
 	public static bool gameIsWaitingForStartFire = true;
 	public static bool eligibleToControlServer = false;
@@ -263,6 +142,10 @@ public class netClientMgr : MonoBehaviour {
 			if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 52;
 			if(Input.GetKeyDown(KeyCode.Backslash)) gameNum.value = 61;
 			if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 62;
+			if(Input.GetKeyDown(KeyCode.Semicolon)) gameNum.value = 71;
+			if(Input.GetKeyDown(KeyCode.Semicolon)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 72;
+			if(Input.GetKeyDown(KeyCode.Quote)) gameNum.value = 81;
+			if(Input.GetKeyDown(KeyCode.Quote)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 82;
 
 			if(gameNum.value != -10)
 			{
@@ -325,7 +208,7 @@ public class netClientMgr : MonoBehaviour {
 			if (Input.GetKey (KeyCode.K))
 			GUI.Label (new Rect (2, 25, 320, 600),
 
-				   "\nH: start the game\n\n"+
+				   "\nH: start the game\n"+
 
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
@@ -347,21 +230,18 @@ public class netClientMgr : MonoBehaviour {
 				   "P: auto internal link\n" +
 
 		           "\nTRICYCLE STEERING\n"+
-				   "Right Click: steering the tricycle toward\n\n" +
+				   "Right Click: steering the tricycle toward\n" +
 
 		           "\nINCHWORM\n"+
 				   "T: inchworm going forward\n" +
 				   "G: inchworm reverse\n" +
-				   "B: inchworm forward/reverse toggle\n\n" +
+				   "B: inchworm forward/reverse toggle\n" +
 
 				   "\nMOVESPEED\n"+
 				   "Semicolon: speed up\n"+
-				   "Quote: speed down\n\n"+
+				   "Quote: speed down\n"+
 
-				   "L: disconnect\n\n\n" +
-
-				   "SERVER CONTROLS\n" +
-				   "backQuote, numbers, minus, equals, LR brackets, backslash -+ RightCtrl");
+		           "\nL: disconnect");
 
 			if (eligibleToControlServer && (Input.GetKey (KeyCode.RightControl) || Input.GetKey (KeyCode.LeftControl)))
 				GUI.Label (new Rect (2, 25, 500, 600),
@@ -384,7 +264,15 @@ public class netClientMgr : MonoBehaviour {
 		           "i.e. the size of organisms\n\n"+
 
 		           "BackQuote:\n"+
-		           "relaunches the current game, without changing current scale values");
+		           "relaunches the current game, without changing current scale values\n\n"+
+
+		           "Semicolon:\n"+
+		           "move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to veg nodes before launch\n\n"+
+
+		           "Quote:\n"+
+		           "move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to nonveg nodes before launch\n\n"+
+ 
+		           "");
 		}
 	} 
 
@@ -408,7 +296,7 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
 		myClient.RegisterHandler (CScommon.nameNodeIdMsgType, onNameNodeIdMsg);
-//		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsgType);
+		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsgType);
 		myClient.RegisterHandler (CScommon.scaleMsgType, onScaleMsgType);
 
 
@@ -491,7 +379,7 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.intMsg nodeIndexMsg = netMsg.ReadMessage<CScommon.intMsg>();
 		myNodeIndex = nodeIndexMsg.value;
 		Debug.Log ("   my nodeIndex is " + myNodeIndex);
-		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
+//		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
 	}
 
 	public void onInitRevisionMsg (NetworkMessage netMsg)
@@ -547,8 +435,15 @@ public class netClientMgr : MonoBehaviour {
 		debugingDesplayinScrollView(scaleString);
 	}
 
-
-
+	public void sendMyChat()
+	{	
+		if(myChatString == string.Empty) return;
+		CScommon.stringMsg myChatStringMsg = new CScommon.stringMsg();
+		myChatStringMsg.value = myChatString;
+		myClient.Send (CScommon.broadCastMsgType, myChatStringMsg);
+		Debug.Log ("my chat sent");
+		playerChatInputField.text = string.Empty;
+	}
 
 //GOSPINNER *************************************** GOSPINNER\\ 
 	private static class GOspinner {
