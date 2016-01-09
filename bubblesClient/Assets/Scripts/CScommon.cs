@@ -26,6 +26,8 @@ public static class CScommon {
 	public const short restartMsgType = 316; //  //intMsg, sent from client to restart server, 
 	//value determines which game is launched, currently there is only one (game 1)
 	public const short speedMsgType = 317; //intMsg, sent from client to change percent (0 to 300) of it's muscles demand
+	public const short broadCastMsgType = 318; //stringMsg, sent from client to server, and rebroadcast by server to all clients.
+	public const short scaleMsgType = 319; //stringMsg, sent from server to all clients whenever scales are set or changed, a very succinct summary of scales
 
 
 //  Summary of messagery:

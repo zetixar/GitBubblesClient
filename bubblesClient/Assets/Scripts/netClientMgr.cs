@@ -31,6 +31,7 @@ public class netClientMgr : MonoBehaviour {
 	public InputField serverIPInputField;
 	public Button serverIPConnectButton;
 	public Button serverIP192ConnectButton;
+	public GameObject scrollViewForScaling;
 	public Text scrollViewTextDebuging;
 
 
@@ -229,10 +230,9 @@ public class netClientMgr : MonoBehaviour {
 	// 61/62 scale down/up the worldRadius (which scales up/down the relative lengths of links in the world, i.e. the size of organisms )
 
 	public static bool gameIsWaitingForStartFire = true;
-
+	public static bool eligibleToControlServer = false;
 	void controllingServerViaClient()
 	{
-
 		if (gameIsWaitingForStartFire && Input.GetKeyDown(KeyCode.H))
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
@@ -241,23 +241,28 @@ public class netClientMgr : MonoBehaviour {
 			gameIsWaitingForStartFire = false;
 		}
 
+		if (Input.GetKey(KeyCode.RightShift)&&Input.GetKeyDown(KeyCode.Slash))
+		{
+			eligibleToControlServer = true;
+			scrollViewForScaling.SetActive(true);
+		}
 
-		if(Input.GetKey(KeyCode.RightShift) && myClient != null && myClient.isConnected)
+		if(eligibleToControlServer && myClient != null && myClient.isConnected)
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
 			if(Input.GetKeyDown(KeyCode.BackQuote)) gameNum.value = -1;
 			for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
 			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
-			if(Input.GetKeyDown(KeyCode.Minus)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 22;
+			if(Input.GetKeyDown(KeyCode.Minus)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 22;
 			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 31;
-			if(Input.GetKeyDown(KeyCode.Equals)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 32;
+			if(Input.GetKeyDown(KeyCode.Equals)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 32;
 			if(Input.GetKeyDown(KeyCode.LeftBracket)) gameNum.value = 41;
-			if(Input.GetKeyDown(KeyCode.LeftBracket)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 42;
+			if(Input.GetKeyDown(KeyCode.LeftBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 42;
 			if(Input.GetKeyDown(KeyCode.RightBracket)) gameNum.value = 51;
-			if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 52;
+			if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 52;
 			if(Input.GetKeyDown(KeyCode.Backslash)) gameNum.value = 61;
-			if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightControl)||Input.GetKey(KeyCode.LeftControl))) gameNum.value = 62;
+			if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 62;
 
 			if(gameNum.value != -10)
 			{
@@ -358,7 +363,7 @@ public class netClientMgr : MonoBehaviour {
 				   "SERVER CONTROLS\n" +
 				   "backQuote, numbers, minus, equals, LR brackets, backslash -+ RightCtrl");
 
-			if (Input.GetKey (KeyCode.RightControl))
+			if (eligibleToControlServer && (Input.GetKey (KeyCode.RightControl) || Input.GetKey (KeyCode.LeftControl)))
 				GUI.Label (new Rect (2, 25, 500, 600),
 		           "Minus:\n"+ 
 		           "scale down/up the average size (radius) of nodes\n\n" +
@@ -403,6 +408,9 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
 		myClient.RegisterHandler (CScommon.nameNodeIdMsgType, onNameNodeIdMsg);
+//		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsgType);
+		myClient.RegisterHandler (CScommon.scaleMsgType, onScaleMsgType);
+
 
 		myClient.Connect(serverIP, CScommon.serverPort);
 		audioSourceBeepSelectNodeForLink.Play ();
@@ -419,6 +427,7 @@ public class netClientMgr : MonoBehaviour {
 		playerNickNameInputField.gameObject.SetActive(false);
 		stateChoosingServer = false;
 		initialized = false;
+		eligibleToControlServer = false;
 		audioSourceTurning.Play();
 	}
 
@@ -526,6 +535,16 @@ public class netClientMgr : MonoBehaviour {
 	{
 		CScommon.NameNodeIdMsg playersNameListMsg = netMsg.ReadMessage<CScommon.NameNodeIdMsg>();
 		GOspinner.playerNamesManage(playersNameListMsg);
+	}
+
+	public void onBroadCastMsgType(NetworkMessage netMsg)
+	{
+		
+	}
+	public void onScaleMsgType(NetworkMessage netMsg)
+	{
+		string scaleString = netMsg.ReadMessage<CScommon.stringMsg>().value;
+		debugingDesplayinScrollView(scaleString);
 	}
 
 
