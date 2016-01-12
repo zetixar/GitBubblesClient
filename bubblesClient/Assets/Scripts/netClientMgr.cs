@@ -44,8 +44,11 @@ public class netClientMgr : MonoBehaviour {
 	private List<string> chatHistory = new List<string>();
 	private List<string> debugingDisplayHistroy = new List<string>();
 	public Button sendChatButton;
-	public InputField myChatInputField;
+	public static InputField myChatInputField;
 	public GameObject scrollViewForChat;
+	public GameObject chatScrollBar;
+	public GameObject debugScrollBar;
+
 
 
 
@@ -70,7 +73,8 @@ public class netClientMgr : MonoBehaviour {
 	{
 		serverIPInputField.placeholder.GetComponent<Text>().text = serverIP;
 		serverIPInputField.text = serverIPInputField.placeholder.GetComponent<Text>().text;
-
+		myChatInputField = GameObject.Find("ChatInput").GetComponent<InputField>();
+		myChatInputField.gameObject.SetActive(false);
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
 
@@ -91,7 +95,7 @@ public class netClientMgr : MonoBehaviour {
 		if (playerChatInputField.text != string.Empty)
 			myChatString = playerChatInputField.text;
 //		if (isAtStartup && Input.GetKeyDown(KeyCode.C)) SetupClient();
-		if (Input.GetKeyDown (KeyCode.L) && myClient != null && myClient.isConnected) 
+		if (!myChatInputField.isFocused && Input.GetKeyDown (KeyCode.L) && myClient != null && myClient.isConnected) 
 		{
 			myClient.Disconnect();
 			backToChooseServerPhase();
@@ -99,7 +103,7 @@ public class netClientMgr : MonoBehaviour {
 		controllingServerViaClient();
 		if (initialized)
 		{
-			if(Input.GetKeyDown(KeyCode.C))
+			if(!myChatInputField.isFocused && Input.GetKeyDown(KeyCode.C))
 				displayChatWindows(!displayingChatwindowsstatus);
 			GOspinner.Update ();
 		}
@@ -123,7 +127,7 @@ public class netClientMgr : MonoBehaviour {
 	public static bool eligibleToControlServer = false;
 	void controllingServerViaClient()
 	{
-		if (gameIsWaitingForStartFire && Input.GetKeyDown(KeyCode.H))
+		if (gameIsWaitingForStartFire && Input.GetKeyDown(KeyCode.H) && !myChatInputField.isFocused)
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = 0;
@@ -131,33 +135,36 @@ public class netClientMgr : MonoBehaviour {
 			gameIsWaitingForStartFire = false;
 		}
 
-		if (Input.GetKey(KeyCode.RightShift)&&Input.GetKeyDown(KeyCode.Slash))
+		if (Input.GetKey(KeyCode.RightShift)&&Input.GetKeyDown(KeyCode.Slash)&& !myChatInputField.isFocused)
 		{
 			eligibleToControlServer = true;
 			scrollViewForScaling.SetActive(true);
+			debugScrollBar.GetComponent<Scrollbar>().value = 1;
 		}
 
 		if(eligibleToControlServer && myClient != null && myClient.isConnected)
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = -10;
-			if(Input.GetKeyDown(KeyCode.BackQuote)) gameNum.value = -1;
-			for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
-			if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
-			if(Input.GetKeyDown(KeyCode.Minus)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 22;
-			if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 31;
-			if(Input.GetKeyDown(KeyCode.Equals)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 32;
-			if(Input.GetKeyDown(KeyCode.LeftBracket)) gameNum.value = 41;
-			if(Input.GetKeyDown(KeyCode.LeftBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 42;
-			if(Input.GetKeyDown(KeyCode.RightBracket)) gameNum.value = 51;
-			if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 52;
-			if(Input.GetKeyDown(KeyCode.Backslash)) gameNum.value = 61;
-			if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 62;
-			if(Input.GetKeyDown(KeyCode.Semicolon)) gameNum.value = 71;
-			if(Input.GetKeyDown(KeyCode.Semicolon)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 72;
-			if(Input.GetKeyDown(KeyCode.Quote)) gameNum.value = 81;
-			if(Input.GetKeyDown(KeyCode.Quote)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 82;
-
+			if(!myChatInputField.isFocused)
+			{
+				if(Input.GetKeyDown(KeyCode.BackQuote)) gameNum.value = -1;
+				for(int i = 0; i <10; i++) if (Input.GetKeyDown(""+i)) gameNum.value = i;
+				if(Input.GetKeyDown(KeyCode.Minus)) gameNum.value = 21;
+				if(Input.GetKeyDown(KeyCode.Minus)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 22;
+				if(Input.GetKeyDown(KeyCode.Equals)) gameNum.value = 31;
+				if(Input.GetKeyDown(KeyCode.Equals)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 32;
+				if(Input.GetKeyDown(KeyCode.LeftBracket)) gameNum.value = 41;
+				if(Input.GetKeyDown(KeyCode.LeftBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 42;
+				if(Input.GetKeyDown(KeyCode.RightBracket)) gameNum.value = 51;
+				if(Input.GetKeyDown(KeyCode.RightBracket)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 52;
+				if(Input.GetKeyDown(KeyCode.Backslash)) gameNum.value = 61;
+				if(Input.GetKeyDown(KeyCode.Backslash)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 62;
+				if(Input.GetKeyDown(KeyCode.Semicolon)) gameNum.value = 71;
+				if(Input.GetKeyDown(KeyCode.Semicolon)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 72;
+				if(Input.GetKeyDown(KeyCode.Quote)) gameNum.value = 81;
+				if(Input.GetKeyDown(KeyCode.Quote)&&(Input.GetKey(KeyCode.RightShift)||Input.GetKey(KeyCode.LeftShift))) gameNum.value = 82;
+			}
 			if(gameNum.value != -10)
 			{
 				myClient.Send(CScommon.restartMsgType, gameNum);
@@ -179,9 +186,10 @@ public class netClientMgr : MonoBehaviour {
 		miniCamera.gameObject.SetActive(false);
 		gamePhaseMsg.numNodes = 0;
 		gamePhaseMsg.numLinks = 0;
+		if (GOspinner.bubbles != null)
+			GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
 		joiningTheRuningGame = true;
-
 	}
 
 	//called by btn in the scene
@@ -219,7 +227,7 @@ public class netClientMgr : MonoBehaviour {
 		{
 			GUI.Label (new Rect (2, 10, 150, 100), "KeyGuid (K)");
 
-			if (Input.GetKey (KeyCode.K))
+			if (Input.GetKey (KeyCode.K)&&!myChatInputField.isFocused)
 			GUI.Label (new Rect (2, 25, 320, 600),
 
 				   "\nH: start the game\n"+
@@ -253,12 +261,12 @@ public class netClientMgr : MonoBehaviour {
 				   "B: inchworm forward/reverse toggle\n" +
 
 				   "\nMOVESPEED\n"+
-				   "Semicolon: speed up\n"+
-				   "Quote: speed down\n"+
+				   "Comma: speed up\n"+
+				   "Period: speed down\n"+
 
 		           "\nL: disconnect");
 
-			if (eligibleToControlServer && (Input.GetKey (KeyCode.RightControl) || Input.GetKey (KeyCode.LeftControl)))
+			if (eligibleToControlServer && (Input.GetKey (KeyCode.RightControl) || Input.GetKey (KeyCode.LeftControl))&&!myChatInputField.isFocused)
 				GUI.Label (new Rect (2, 25, 500, 600),
 		           "Minus:\n"+ 
 		           "scale down/up the average size (radius) of nodes\n\n" +
@@ -335,6 +343,7 @@ public class netClientMgr : MonoBehaviour {
 		debugingDisplayHistroy = new List<string>();
 		chatHistory = new List<string>();
 		displayChatWindows(true);
+
 	}
 
 	public void OnDisconnectC(NetworkMessage info)
@@ -366,8 +375,6 @@ public class netClientMgr : MonoBehaviour {
 		//game is preloading or restarting, I send initRequest
 		else if (gamePhaseMsg.gamePhase == 1)
 		{	
-			Debug.Log ("gamephase1 recieved");
-
 			joiningTheRuningGame = false;
 			miniCamera.gameObject.SetActive(true);
 
@@ -478,6 +485,7 @@ public class netClientMgr : MonoBehaviour {
 		myChatInputField.gameObject.SetActive(show);
 		scrollViewForChat.gameObject.SetActive(show);
 		displayingChatwindowsstatus = show;
+		chatScrollBar.GetComponent<Scrollbar>().value = 1;
 	}
 
 //GOSPINNER *************************************** GOSPINNER\\ 
@@ -521,13 +529,11 @@ public class netClientMgr : MonoBehaviour {
 		internal static void prepareForInitialize(CScommon.InitMsg partofinitmsg)
 		{
 			for (int i = partofinitmsg.start; i < partofinitmsg.start + partofinitmsg.nodeData.Length; i++)
-			
 			{
 				GOspinner.initMsg.nodeData[i] = partofinitmsg.nodeData[i - partofinitmsg.start];
 				//false means that it will change bubbles[i] and will not 'add' to the list blindly
 				nodePrefabCheck (i, false);
 				//**oomp
-
 				oomphs[i] = ((Transform)Instantiate (pfOomph, Vector3.zero, Quaternion.identity));
 //				oomphs[i].Rotate(0f,0f, Random.Range (0f,90.0f));
 				oomphs [i].tag = "oomphClone";
@@ -548,12 +554,17 @@ public class netClientMgr : MonoBehaviour {
 		}
 		
 		public static void cleanScene()
-		{	if(bubbles.Length > 0){
+		{	
+			if(bubbles.Length > 0)
+			{
 				for (int i = 0; i < bubbles.Length; i++)
 					Destroy(bubbles[i].gameObject);
 				for (int i = 0; i < links.Length; i++)
 					Destroy(links[i].gameObject);
 			}
+			GameObject[] bubblesClone = GameObject.FindGameObjectsWithTag ("bblClone");
+			foreach (GameObject bubbleClone in bubblesClone)
+				Destroy (bubbleClone);
 			GameObject[] playerNames = GameObject.FindGameObjectsWithTag ("PlayerName");
 			foreach (GameObject playerName in playerNames)
 				Destroy (playerName);
@@ -964,6 +975,7 @@ public class netClientMgr : MonoBehaviour {
 		static int cameraFollowNodeIndex = 0;
 		public static int cameraZoomOutAtStart;
 
+
 		public static void Update()
 		{	
 			if (cameraZoomOutAtStart > 0)
@@ -972,79 +984,81 @@ public class netClientMgr : MonoBehaviour {
 				cameraZoomOutAtStart --;
 				return;
 			}
-			if (choosingNodePhase && Input.GetMouseButtonDown (0))ChoosingMyNode ();
+			if (choosingNodePhase && Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)ChoosingMyNode ();
 			cameraMover ();
 			positioning ();
 			updateLinksPosRotScale();
 
-			if (Input.GetKeyDown(KeyCode.Semicolon))
+			if(!myChatInputField.isFocused)
 			{
-				MusSpeedController(20);
-			}
-			if (Input.GetKeyDown(KeyCode.Quote))
-			{
-				MusSpeedController(-20);
-			}
-			//Requesting to make push internal link for my inchworm
-			if (Input.GetKeyDown(KeyCode.R))
-			{
-				InversInchwomrsLink(1);
-			}
-			//Requesting to make pull internal link for my inchworm
-			if (Input.GetKeyDown(KeyCode.F))
-			{
-				InversInchwomrsLink(2);
-			}
-			if (Input.GetKeyDown(KeyCode.P))
-			{
-				InversInchwomrsLink(0);
-			}
-			if (Input.GetKeyDown(KeyCode.V))
-			{
-				InversInchwomrsLink(3);
-			}
-			//forward
-			if (Input.GetKeyDown(KeyCode.T))
-			{
-				inchwormForwardBackWard(0);
-			}
-			//backward
-			if (Input.GetKeyDown(KeyCode.G))
-			{
-				inchwormForwardBackWard(1);
-			}
-			if (Input.GetKeyDown(KeyCode.B))
-			{
-				inchwormForwardBackWard(2);
-			}
-			if (Input.GetKeyDown(KeyCode.F7))
-			{
-				displayNames++;
-				if (displayNames > 3) displayNames = 0;
-				changeHowToDisPlayPlayersName();
+				if (Input.GetKeyDown(KeyCode.Comma))
+				{
+					MusSpeedController(20);
+				}
+				if (Input.GetKeyDown(KeyCode.Period))
+				{
+					MusSpeedController(-20);
+				}
+				//Requesting to make push internal link for my inchworm
+				if (Input.GetKeyDown(KeyCode.R))
+				{
+					InversInchwomrsLink(1);
+				}
+				//Requesting to make pull internal link for my inchworm
+				if (Input.GetKeyDown(KeyCode.F))
+				{
+					InversInchwomrsLink(2);
+				}
+				if (Input.GetKeyDown(KeyCode.P))
+				{
+					InversInchwomrsLink(0);
+				}
+				if (Input.GetKeyDown(KeyCode.V))
+				{
+					InversInchwomrsLink(3);
+				}
+				//forward
+				if (Input.GetKeyDown(KeyCode.T))
+				{
+					inchwormForwardBackWard(0);
+				}
+				//backward
+				if (Input.GetKeyDown(KeyCode.G))
+				{
+					inchwormForwardBackWard(1);
+				}
+				if (Input.GetKeyDown(KeyCode.B))
+				{
+					inchwormForwardBackWard(2);
+				}
+				if (Input.GetKeyDown(KeyCode.F7))
+				{
+					displayNames++;
+					if (displayNames > 3) displayNames = 0;
+					changeHowToDisPlayPlayersName();
+				}
+
+				if (Input.GetKeyDown(KeyCode.U))
+				{
+					CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
+					myDesiredRotationto.value = 1;
+					myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
+					Debug.Log ("Turn to Left");
+				}
+				if (Input.GetKeyDown(KeyCode.I))
+				{
+					CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
+					myDesiredRotationto.value = -1;
+					myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
+					Debug.Log ("Turn to Right");
+				}
+				if(Input.GetMouseButtonDown (1))
+				{
+					requestToRotateMe();
+				}
 			}
 			if (!gameIsRunning || myNodeIndex < 0) return;
 			requestLinktoTarget ();
-
-			if (Input.GetKeyDown(KeyCode.U))
-			{
-				CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
-				myDesiredRotationto.value = 1;
-				myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
-				Debug.Log ("Turn to Left");
-				
-			}
-			if (Input.GetKeyDown(KeyCode.I))
-			{
-				CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
-				myDesiredRotationto.value = -1;
-				myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
-				Debug.Log ("Turn to Right");
-			}
-			if(Input.GetMouseButtonDown (1))
-			{
-				requestToRotateMe();
-			}
 		}
 
 		static int myInternalMusSpeed = 80;
@@ -1066,11 +1080,11 @@ public class netClientMgr : MonoBehaviour {
 //** need to clamp the camera so it cannot go over up/down/right/left.
 		static void cameraMover()
 		{
-			if (Input.GetAxis("Horizontal") != 0.0f)
+			if (Input.GetAxis("Horizontal") != 0.0f &&!myChatInputField.isFocused)
 				{
 				mainCamera.transform.Translate(new Vector3((Input.GetAxis("Horizontal"))*camSpeed * Time.deltaTime,0,0));
 				}
-			if (Input.GetAxis("Vertical") != 0.0f)
+			if (Input.GetAxis("Vertical") != 0.0f&&!myChatInputField.isFocused)
 				{
 				mainCamera.transform.Translate(new Vector3(0,(Input.GetAxis("Vertical"))*camSpeed * Time.deltaTime,0));
 				}
@@ -1082,13 +1096,13 @@ public class netClientMgr : MonoBehaviour {
 					 -100);
 				mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position,playerDefualtCamPos,Time.deltaTime * mainCamMoveSpeed);
 			}
-			if (Input.GetKeyDown (KeyCode.Q) && myNodeIndex != -1)
+			if (Input.GetKeyDown (KeyCode.Q) && myNodeIndex != -1&&!myChatInputField.isFocused)
 			{
 				cameraFollowMynode = !cameraFollowMynode;
 			}
-			if (Input.GetKey (KeyCode.Z))
+			if (Input.GetKey (KeyCode.Z)&&!myChatInputField.isFocused)
 				zoomIn (4.0f);
-			else if (Input.GetKey(KeyCode.X))
+			else if (Input.GetKey(KeyCode.X)&&!myChatInputField.isFocused)
 				 zoomOut (4.0f);
 
 			if (Input.GetAxis("Mouse ScrollWheel") > 0)
@@ -1103,10 +1117,10 @@ public class netClientMgr : MonoBehaviour {
 //			 to let Spectator follow one node
 			if (gameIsRunning && spectating)
 			{
-				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.X))
+				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.X)&&!myChatInputField.isFocused)
 					followingCamera = false;
 
-				if (Input.GetMouseButtonDown (0))
+				if (Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)
 				{
 					cameraFollowNodeIndex = closestBubbleIndexNumber();
 					followingCamera = true;
@@ -1122,7 +1136,7 @@ public class netClientMgr : MonoBehaviour {
 				}
 //				mainCamera.transform.position = bubbles[cameraFollowNodeIndex].position;
 			}
-			if (Input.GetKeyDown(KeyCode.F1)&& myNodeIndex != -1 && bubbles[myNodeIndex].gameObject != null)
+			if (Input.GetKeyDown(KeyCode.F1)&& myNodeIndex != -1 && bubbles[myNodeIndex].gameObject != null&&!myChatInputField.isFocused)
 			{
 				mainCamera.orthographicSize = 150.0f;
 				Vector3 playerDefualtCamPos = new Vector3 
@@ -1183,7 +1197,7 @@ public class netClientMgr : MonoBehaviour {
 		static void ChoosingMyNode()
 		{
 			CScommon.intMsg myDesiredNodeIndexNumber= new CScommon.intMsg();
-			if (Input.GetKey (KeyCode.LeftControl))
+			if (Input.GetKey (KeyCode.LeftControl)&&!myChatInputField.isFocused)
 				myDesiredNodeIndexNumber.value = -1;
 			else 
 				myDesiredNodeIndexNumber.value = GOspinner.closestBubbleIndexNumber ();
@@ -1195,18 +1209,18 @@ public class netClientMgr : MonoBehaviour {
 		internal static void requestLinktoTarget()
 		{
 			CScommon.TargetNodeMsg nim = new CScommon.TargetNodeMsg ();
-			if (Input.GetKeyDown(KeyCode.N))
+			if (Input.GetKeyDown(KeyCode.N)&&!myChatInputField.isFocused)
 			{
 				nim.nodeIndex = myNodeIndex;
 				myClient.Send (CScommon.targetNodeType, nim);
 				return;
 			}
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
-			if (Input.GetMouseButtonDown (0))// && myClient != null && myClient.isConnected && gameIsRunning) 
+			if (Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{	//On serverside if I send my own nodeId as the target I'll have no external link
 				nim.nodeIndex = GOspinner.closestBubbleIndexNumber ();
 				nim.linkType = CScommon.LinkType.puller;
-				if (Input.GetKey(KeyCode.Space))
+				if (Input.GetKey(KeyCode.Space)&&!myChatInputField.isFocused)
 					nim.linkType = CScommon.LinkType.pusher;
 				myClient.Send (CScommon.targetNodeType, nim);
 				audioSourceBeepSelectNodeForLink.Play ();

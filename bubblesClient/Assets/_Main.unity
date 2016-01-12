@@ -482,8 +482,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 495600886}
   m_HandleRect: {fileID: 495600885}
   m_Direction: 2
-  m_Value: 2.60833929e-07
-  m_Size: .609999955
+  m_Value: 0
+  m_Size: .610000014
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1207,7 +1207,7 @@ RectTransform:
   m_Father: {fileID: 871935465}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: .609999955}
+  m_AnchorMax: {x: 1, y: .610000014}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: .5, y: .5}
@@ -1500,7 +1500,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 511134820}
   m_Direction: 0
   m_Value: 0
-  m_Size: .99999994
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1725,6 +1725,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 12
       objectReference: {fileID: 0}
+    - target: {fileID: 21258082, guid: 95061a91977b5df4da87da5f8e2da6ad, type: 2}
+      propertyPath: m_Color.a
+      value: .352941185
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 95061a91977b5df4da87da5f8e2da6ad, type: 2}
   m_IsPrefabParent: 0
@@ -1765,8 +1769,9 @@ MonoBehaviour:
   scrollViewTextDebuging: {fileID: 819164221}
   scrollViewDisplayAllChat: {fileID: 2090146499}
   sendChatButton: {fileID: 136988930}
-  myChatInputField: {fileID: 2100076483}
   scrollViewForChat: {fileID: 966123408}
+  chatScrollBar: {fileID: 175403402}
+  debugScrollBar: {fileID: 308260985}
   clipBeepSelectNodeForLink: {fileID: 8300000, guid: 81509b4211cb9244c9e699e2ef31234a,
     type: 3}
   clipTurning: {fileID: 8300000, guid: 3fcedb8c415614843bff6384e28616bf, type: 3}
@@ -1933,6 +1938,10 @@ Prefab:
     - target: {fileID: 21216124, guid: f956a0e420131ee48b4b95f8cd1d9637, type: 2}
       propertyPath: m_Color.g
       value: .705882311
+      objectReference: {fileID: 0}
+    - target: {fileID: 21216124, guid: f956a0e420131ee48b4b95f8cd1d9637, type: 2}
+      propertyPath: m_Color.a
+      value: .509803951
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: f956a0e420131ee48b4b95f8cd1d9637, type: 2}
@@ -2520,6 +2529,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 21260090, guid: d4f853ed01a8fa8459bc08811657c3df, type: 2}
+      propertyPath: m_Color.a
+      value: .352941185
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: d4f853ed01a8fa8459bc08811657c3df, type: 2}
   m_IsPrefabParent: 0
@@ -2713,7 +2726,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 21270604, guid: bf776bda63a342a4b86689093ee240b4, type: 2}
       propertyPath: m_Color.a
-      value: .960784316
+      value: .70588237
       objectReference: {fileID: 0}
     - target: {fileID: 420480, guid: bf776bda63a342a4b86689093ee240b4, type: 2}
       propertyPath: m_LocalScale.x
@@ -2730,6 +2743,10 @@ Prefab:
     - target: {fileID: 162964, guid: bf776bda63a342a4b86689093ee240b4, type: 2}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 21270604, guid: bf776bda63a342a4b86689093ee240b4, type: 2}
+      propertyPath: m_SortingOrder
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 9541078, guid: bf776bda63a342a4b86689093ee240b4, type: 2}
@@ -2904,6 +2921,14 @@ Prefab:
       propertyPath: m_RootOrder
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 21208630, guid: 47ab6756b199e6842aea7961afa2801b, type: 2}
+      propertyPath: m_Color.a
+      value: .352941185
+      objectReference: {fileID: 0}
+    - target: {fileID: 21208630, guid: 47ab6756b199e6842aea7961afa2801b, type: 2}
+      propertyPath: m_SortingOrder
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 47ab6756b199e6842aea7961afa2801b, type: 2}
   m_IsPrefabParent: 0
@@ -2948,7 +2973,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 21209100, guid: 1dbebd5690376d94f992e05ab069ac97, type: 2}
       propertyPath: m_Color.a
-      value: .802999973
+      value: .352941185
+      objectReference: {fileID: 0}
+    - target: {fileID: 21209100, guid: 1dbebd5690376d94f992e05ab069ac97, type: 2}
+      propertyPath: m_SortingOrder
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1dbebd5690376d94f992e05ab069ac97, type: 2}
@@ -3340,6 +3369,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: 21231172, guid: 24c445dd4005e24439efb9838b4c7dbd, type: 2}
+      propertyPath: m_Color.a
+      value: .352941185
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 24c445dd4005e24439efb9838b4c7dbd, type: 2}
   m_IsPrefabParent: 0
@@ -3381,6 +3414,22 @@ Prefab:
     - target: {fileID: 462478, guid: b2658233d5993004ca449d2264501c87, type: 2}
       propertyPath: m_RootOrder
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 21242582, guid: b2658233d5993004ca449d2264501c87, type: 2}
+      propertyPath: m_Color.r
+      value: .453883767
+      objectReference: {fileID: 0}
+    - target: {fileID: 21242582, guid: b2658233d5993004ca449d2264501c87, type: 2}
+      propertyPath: m_Color.g
+      value: .420415193
+      objectReference: {fileID: 0}
+    - target: {fileID: 21242582, guid: b2658233d5993004ca449d2264501c87, type: 2}
+      propertyPath: m_Color.b
+      value: .705882311
+      objectReference: {fileID: 0}
+    - target: {fileID: 21242582, guid: b2658233d5993004ca449d2264501c87, type: 2}
+      propertyPath: m_Color.a
+      value: .352941185
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: b2658233d5993004ca449d2264501c87, type: 2}
@@ -3700,7 +3749,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 3.81469727e-05, y: 116.999969}
+  m_AnchoredPosition: {x: 3.81469727e-05, y: 117}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2090146499
@@ -3825,7 +3874,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2100076482
 RectTransform:
   m_ObjectHideFlags: 0
