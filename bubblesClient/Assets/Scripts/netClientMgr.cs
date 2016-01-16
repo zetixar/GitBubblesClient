@@ -137,8 +137,8 @@ public class netClientMgr : MonoBehaviour {
 
 		if (Input.GetKey(KeyCode.RightShift)&&Input.GetKeyDown(KeyCode.Slash)&& !myChatInputField.isFocused)
 		{
-			eligibleToControlServer = true;
-			scrollViewForScaling.SetActive(true);
+			eligibleToControlServer = !eligibleToControlServer;
+			scrollViewForScaling.SetActive(eligibleToControlServer);
 			debugScrollBar.GetComponent<Scrollbar>().value = 1;
 		}
 
@@ -190,6 +190,7 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
 		joiningTheRuningGame = true;
+		gamePhase1AlreadyRecieved = false;
 	}
 
 	//called by btn in the scene
@@ -343,7 +344,6 @@ public class netClientMgr : MonoBehaviour {
 		debugingDisplayHistroy = new List<string>();
 		chatHistory = new List<string>();
 		displayChatWindows(true);
-
 	}
 
 	public void OnDisconnectC(NetworkMessage info)
@@ -352,43 +352,54 @@ public class netClientMgr : MonoBehaviour {
 		backToChooseServerPhase();
 	}
 
+	public static bool setCameraOrthographicTo1600 = true;
+	public static bool gamePhase1AlreadyRecieved = false;
+
 	public void onGamePhaseMsg(NetworkMessage netMsg)
 	{
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
+		CScommon.stringMsg myname = new CScommon.stringMsg();
+		myname.value = playerNickName;
+		myClient.Send (CScommon.initRequestType, myname);
+
+		if (gamePhaseMsg.gamePhase == 1)
+		{
+			gamePhase1AlreadyRecieved = true;
+			setCameraOrthographicTo1600 = true;
+		}
+
+		if (gamePhaseMsg.gamePhase == 2 && gamePhase1AlreadyRecieved == true)
+			setCameraOrthographicTo1600 = false;
+//		if (GOspinner.bubbles != null)
+		GOspinner.cleanScene ();
+		//Allocating bubbles,links,oomphs etc. & MynodeIndex = -1
+		GOspinner.settingUpTheScene();
+		miniCamera.gameObject.SetActive(true);
+
 		if (gamePhaseMsg.gamePhase == 2)
 		{
-//			if(joiningTheRuningGame)
-//			{
-//				CScommon.stringMsg myname = new CScommon.stringMsg();
-//				myname.value = playerNickName;
-//				myClient.Send (CScommon.initRequestType, myname);
-//				return;
-//			}
 			gameIsRunning = true;
 			choosingNodePhase = false;
+			gameIsWaitingForStartFire = false;
+			if(joiningTheRuningGame)
+			{
+				spectating = true;
+				return;
+			}
 			if (myNodeIndex == -1)
 				spectating = true;
 			else
 				spectating = false;
-			gameIsWaitingForStartFire = false;
 		}
 		//game is preloading or restarting, I send initRequest
 		else if (gamePhaseMsg.gamePhase == 1)
 		{	
 			joiningTheRuningGame = false;
-			miniCamera.gameObject.SetActive(true);
-
-			CScommon.stringMsg myname = new CScommon.stringMsg();
-			myname.value = playerNickName;
-			myClient.Send (CScommon.initRequestType, myname);
-
+			choosingNodePhase = true;
 			gameIsRunning = false;
 			spectating = false;
-			if (GOspinner.bubbles != null)
-			GOspinner.cleanScene ();
-			//Allocating bubbles,links,oomphs etc. & MynodeIndex = -1
-			GOspinner.settingUpTheScene();
 			gameIsWaitingForStartFire = true;
+			setCameraOrthographicTo1600 = false;
 		}
 	}
 
@@ -439,7 +450,7 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.LinksMsg newLinkMsg = netMsg.ReadMessage<CScommon.LinksMsg>();
 
 		//if it is the first linkMsg it will generate link
-		if(generatingLink)
+		if(generatingLink && GOspinner.links[0] == null)
 		GOspinner.generateLinks(); // I do it once at the begining
 		GOspinner.reassignLinksPrefabs(newLinkMsg); // Done every time that I recieve onLinkMsg to fix the prefabs for bones etc. and apply setActive
 	}
@@ -541,25 +552,15 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
-		internal static void resetGameStats() {
-			mainCamera.orthographicSize = 1600.0f;
-			mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
-			cameraZoomOutAtStart = 105;
-			gameIsRunning = false;
-			generatingLink = true;
-			initialized = false;
-			cameraFollowMynode = false;
-			cameraFollowNodeIndex = 0;
-			followingCamera = false;
-		}
-		
 		public static void cleanScene()
 		{	
-			if(bubbles.Length > 0)
+			if(GOspinner.bubbles != null && bubbles.Length > 0)
 			{
 				for (int i = 0; i < bubbles.Length; i++)
+					if(bubbles[i] != null)
 					Destroy(bubbles[i].gameObject);
 				for (int i = 0; i < links.Length; i++)
+					if(links[i] != null)
 					Destroy(links[i].gameObject);
 			}
 			GameObject[] bubblesClone = GameObject.FindGameObjectsWithTag ("bblClone");
@@ -599,11 +600,25 @@ public class netClientMgr : MonoBehaviour {
 			
 			GOspinner.dicPlayerNames = new Dictionary<int, string>();
 			GOspinner.playersNameTransforms = new Dictionary<int, Transform>();
-			myNodeIndex = -1;
 			GOspinner.resetGameStats();
 
 		}
-
+		
+		internal static void resetGameStats() {
+			if(setCameraOrthographicTo1600){
+				myNodeIndex = -1;
+				mainCamera.orthographicSize = 1600.0f;
+				mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
+				cameraZoomOutAtStart = 105;
+			}
+			gameIsRunning = false;
+			generatingLink = true;
+			initialized = false;
+			cameraFollowMynode = false;
+			cameraFollowNodeIndex = 0;
+			followingCamera = false;
+			setCameraOrthographicTo1600 =false;
+		}
 
 		public static void nodePrefabCheck(int i, bool add)
 		{
@@ -714,7 +729,7 @@ public class netClientMgr : MonoBehaviour {
 				// The second part of the if statement is for not reInstantiating bone links on every onLinkMsg
 				if (linkinfo.linkData.linkType == CScommon.LinkType.bone && links[linkinfo.linkId].tag == "LinkClone")
 				{
-					Destroy(links[linkinfo.linkId]);
+					Destroy(links[linkinfo.linkId].gameObject);
 					links[linkinfo.linkId] = (GameObject) Instantiate(pfBoneLink.gameObject,Vector3.zero,Quaternion.identity) as GameObject;
 					links[linkinfo.linkId].name = "Link " + linkinfo.linkId;
 					links[linkinfo.linkId].tag = "LinkCloneBone";
