@@ -88,6 +88,7 @@ public static class CScommon {
 	public class TargetNodeMsg : MessageBase{
 		public int nodeIndex;
 		public LinkType linkType;
+		public byte hand; //0 my left link, 1 my right link
 	}
 	
 	public struct StaticNodeData {

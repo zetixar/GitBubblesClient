@@ -49,6 +49,9 @@ public class netClientMgr : MonoBehaviour {
 	public GameObject chatScrollBar;
 	public GameObject debugScrollBar;
 
+	public static Slider speedSlider;
+	public Text speedValueText;
+
 
 
 
@@ -74,13 +77,17 @@ public class netClientMgr : MonoBehaviour {
 		serverIPInputField.placeholder.GetComponent<Text>().text = serverIP;
 		serverIPInputField.text = serverIPInputField.placeholder.GetComponent<Text>().text;
 		myChatInputField = GameObject.Find("ChatInput").GetComponent<InputField>();
+		speedSlider = GameObject.Find("SpeedSlider").GetComponent<Slider>();
 		myChatInputField.gameObject.SetActive(false);
+		speedSlider.gameObject.SetActive(false);
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
+		speedValueText.text = speedSlider.value.ToString();
 
 		mainCamera = Camera.main;
 		//setting up the prefabs
 		GOspinner.gospinnerStart();
+
 	}
 
 	void Update () 
@@ -94,8 +101,8 @@ public class netClientMgr : MonoBehaviour {
 		}
 		if (playerChatInputField.text != string.Empty)
 			myChatString = playerChatInputField.text;
-//		if (isAtStartup && Input.GetKeyDown(KeyCode.C)) SetupClient();
-		if (!myChatInputField.isFocused && Input.GetKeyDown (KeyCode.L) && myClient != null && myClient.isConnected) 
+//		if (isAtStartup && Input.GetKeyDown(KeyCode.Tab) SetupClient();
+		if (!myChatInputField.isFocused && Input.GetKeyDown (KeyCode.F12) && myClient != null && myClient.isConnected) 
 		{
 			myClient.Disconnect();
 			backToChooseServerPhase();
@@ -103,7 +110,7 @@ public class netClientMgr : MonoBehaviour {
 		controllingServerViaClient();
 		if (initialized)
 		{
-			if(!myChatInputField.isFocused && Input.GetKeyDown(KeyCode.C))
+			if(!myChatInputField.isFocused && Input.GetKeyDown(KeyCode.Tab))
 				displayChatWindows(!displayingChatwindowsstatus);
 			GOspinner.Update ();
 		}
@@ -191,6 +198,7 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.settingUpTheScene();
 		joiningTheRuningGame = true;
 		gamePhase1AlreadyRecieved = false;
+		speedSlider.gameObject.SetActive(false);
 	}
 
 	//called by btn in the scene
@@ -226,46 +234,41 @@ public class netClientMgr : MonoBehaviour {
 	{
 	if (myClient != null && myClient.isConnected) 
 		{
-			GUI.Label (new Rect (2, 10, 150, 100), "KeyGuid (K)");
+			GUI.Label (new Rect (2, 10, 150, 100), "For keyguid hold down (F1)");
 
-			if (Input.GetKey (KeyCode.K)&&!myChatInputField.isFocused)
+			if (Input.GetKey (KeyCode.F1)&&!myChatInputField.isFocused)
 			GUI.Label (new Rect (2, 25, 320, 600),
 
 				   "\nH: start the game\n"+
-		           "C: turn off/on chat windows\n" +
+		           "Tab: turn off/on chat windows\n" +
 
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
-		           "Z: zoom in\n" +
-		           "X: zoom out\n" +
-				   "Q: turning on/off camera following Player\n" +
-		           "F1: focusing on my player\n" +
+		           "Q: zoom in\n" +
+		           "E: zoom out\n" +
+				   "C: turning on/off camera following Player\n" +
+		           "F2: focusing on my player\n" +
 		           "F7: displayNames off/on\n" +
 
 		           "\nEXTERNAL LINKS\n"+
-		           "Left Click: puller external link\n" +
-		           "Space+Left Click: pusher external link\n" +
+		           "Left Click: left hand external link\n" +
+				   "Right Click: right hand external link\n"+
+		           "Space + Either Clicks: pusher external link\n" +
 				   "N: no external link\n" +
 
-		           "\nINTERNAL LINKS\n"+
-		           "R: pusher internal link\n" +
-		           "F: puller internal link\n" +
-		           "V: pull/push toggle internal link\n" +
-				   "P: auto internal link\n" +
-
 		           "\nTRICYCLE STEERING\n"+
-				   "Right Click: steering the tricycle toward\n" +
+				   "Z: steering the tricycle to left\n" +
+		           "X: steering the tricycle to right\n" +
 
-		           "\nINCHWORM\n"+
-				   "T: inchworm going forward\n" +
-				   "G: inchworm reverse\n" +
+		           "\nMOVESPEED\n"+
+		           "Mouse ScrollWheel: speed up/down\n"+
 				   "B: inchworm forward/reverse toggle\n" +
 
 				   "\nMOVESPEED\n"+
 				   "Comma: speed up\n"+
 				   "Period: speed down\n"+
 
-		           "\nL: disconnect");
+		           "\nF12: disconnect");
 
 			if (eligibleToControlServer && (Input.GetKey (KeyCode.RightControl) || Input.GetKey (KeyCode.LeftControl))&&!myChatInputField.isFocused)
 				GUI.Label (new Rect (2, 25, 500, 600),
@@ -315,7 +318,7 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler (CScommon.gamePhaseMsgType, onGamePhaseMsg);
 		myClient.RegisterHandler(CScommon.initMsgType, onInitMsg);
 		myClient.RegisterHandler(CScommon.nodeIdMsgType, onNodeIDMsg);
-		myClient.RegisterHandler (CScommon.requestNodeIdMsgType, onAssignedMyNodeID);
+//		myClient.RegisterHandler (CScommon.requestNodeIdMsgType, onAssignedMyNodeID);
 		myClient.RegisterHandler (CScommon.initRevisionMsgType, onInitRevisionMsg);
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
@@ -358,22 +361,25 @@ public class netClientMgr : MonoBehaviour {
 	public void onGamePhaseMsg(NetworkMessage netMsg)
 	{
 		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
-		CScommon.stringMsg myname = new CScommon.stringMsg();
-		myname.value = playerNickName;
-		myClient.Send (CScommon.initRequestType, myname);
+
 
 		if (gamePhaseMsg.gamePhase == 1)
 		{
 			gamePhase1AlreadyRecieved = true;
 			setCameraOrthographicTo1600 = true;
 		}
-
 		if (gamePhaseMsg.gamePhase == 2 && gamePhase1AlreadyRecieved == true)
 			setCameraOrthographicTo1600 = false;
+		if (gamePhaseMsg.gamePhase == 1 || joiningTheRuningGame)
+		{
+			CScommon.stringMsg myname = new CScommon.stringMsg();
+			myname.value = playerNickName;
+			myClient.Send (CScommon.initRequestType, myname);
 //		if (GOspinner.bubbles != null)
-		GOspinner.cleanScene ();
+			GOspinner.cleanScene ();
 		//Allocating bubbles,links,oomphs etc. & MynodeIndex = -1
-		GOspinner.settingUpTheScene();
+			GOspinner.settingUpTheScene();
+		}
 		miniCamera.gameObject.SetActive(true);
 
 		if (gamePhaseMsg.gamePhase == 2)
@@ -414,6 +420,9 @@ public class netClientMgr : MonoBehaviour {
 	public void onNodeIDMsg(NetworkMessage netMsg){
 		CScommon.intMsg nodeIndexMsg = netMsg.ReadMessage<CScommon.intMsg>();
 		myNodeIndex = nodeIndexMsg.value;
+		speedSlider.gameObject.SetActive(true);
+		if(myNodeIndex == -1)
+		speedSlider.gameObject.SetActive(false);
 		Debug.Log ("   my nodeIndex is " + myNodeIndex);
 //		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
 	}
@@ -437,7 +446,9 @@ public class netClientMgr : MonoBehaviour {
 			Debug.Log ("You don't have bubble");
 		}
 		else
+		{
 			GOspinner.nodePrefabCheck(myNodeIndex,false);
+		}
 	}
 
 
@@ -497,6 +508,12 @@ public class netClientMgr : MonoBehaviour {
 		scrollViewForChat.gameObject.SetActive(show);
 		displayingChatwindowsstatus = show;
 		chatScrollBar.GetComponent<Scrollbar>().value = 1;
+	}
+
+	public void MusSpeedControllerr(int myDesiredSpeed)
+	{
+		GOspinner.MusSpeedController(myDesiredSpeed);
+		speedValueText.text = speedSlider.value.ToString();	
 	}
 
 //GOSPINNER *************************************** GOSPINNER\\ 
@@ -982,15 +999,9 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
-
-
-
-
 		static bool followingCamera = false;
 		static int cameraFollowNodeIndex = 0;
 		public static int cameraZoomOutAtStart;
-
-
 		public static void Update()
 		{	
 			if (cameraZoomOutAtStart > 0)
@@ -1006,45 +1017,10 @@ public class netClientMgr : MonoBehaviour {
 
 			if(!myChatInputField.isFocused)
 			{
-				if (Input.GetKeyDown(KeyCode.Comma))
-				{
-					MusSpeedController(20);
-				}
-				if (Input.GetKeyDown(KeyCode.Period))
-				{
-					MusSpeedController(-20);
-				}
-				//Requesting to make push internal link for my inchworm
-				if (Input.GetKeyDown(KeyCode.R))
-				{
-					InversInchwomrsLink(1);
-				}
-				//Requesting to make pull internal link for my inchworm
-				if (Input.GetKeyDown(KeyCode.F))
-				{
-					InversInchwomrsLink(2);
-				}
-				if (Input.GetKeyDown(KeyCode.P))
-				{
-					InversInchwomrsLink(0);
-				}
-				if (Input.GetKeyDown(KeyCode.V))
-				{
-					InversInchwomrsLink(3);
-				}
-				//forward
-				if (Input.GetKeyDown(KeyCode.T))
-				{
-					inchwormForwardBackWard(0);
-				}
-				//backward
-				if (Input.GetKeyDown(KeyCode.G))
-				{
-					inchwormForwardBackWard(1);
-				}
+
 				if (Input.GetKeyDown(KeyCode.B))
 				{
-					inchwormForwardBackWard(2);
+					MusSpeedController(myInternalMusSpeed * -1);
 				}
 				if (Input.GetKeyDown(KeyCode.F7))
 				{
@@ -1067,26 +1043,42 @@ public class netClientMgr : MonoBehaviour {
 					myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 					Debug.Log ("Turn to Right");
 				}
-				if(Input.GetMouseButtonDown (1))
+				//rotate to left
+				if (Input.GetKeyDown(KeyCode.Z))
 				{
-					requestToRotateMe();
+					requestToRotateMe(-1);
 				}
+				//rotate to right
+				if (Input.GetKeyDown(KeyCode.X))
+				{
+					requestToRotateMe(1);
+				}
+				
 			}
 			if (!gameIsRunning || myNodeIndex < 0) return;
+			if (Input.GetAxis("Mouse ScrollWheel") > 0)
+			{
+				MusSpeedController(30);
+			}
+			if (Input.GetAxis("Mouse ScrollWheel") < 0)
+			{
+				MusSpeedController(-30);
+			}
 			requestLinktoTarget ();
 		}
 
 		static int myInternalMusSpeed = 80;
 		//static int myExternalMusSpeed = 80;
-		static void MusSpeedController(int increaseOrDecreaseSpeed)
+		public static void MusSpeedController(int increaseOrDecreaseSpeed)
 		{
 			CScommon.intMsg myDesiredSpeed= new CScommon.intMsg();
 			myInternalMusSpeed += increaseOrDecreaseSpeed;
-			if (0 > myInternalMusSpeed)	myInternalMusSpeed = 0;
+			if (-300 > myInternalMusSpeed)	myInternalMusSpeed = -300;
 			if (myInternalMusSpeed > 300) myInternalMusSpeed = 300;
 
 			myDesiredSpeed.value = myInternalMusSpeed;
 			myClient.Send (CScommon.speedMsgType, myDesiredSpeed);
+			speedSlider.value = myInternalMusSpeed;
 			Debug.Log ("My Internal Mus Speed: " + myInternalMusSpeed);
 		}
 	
@@ -1111,28 +1103,18 @@ public class netClientMgr : MonoBehaviour {
 					 -100);
 				mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position,playerDefualtCamPos,Time.deltaTime * mainCamMoveSpeed);
 			}
-			if (Input.GetKeyDown (KeyCode.Q) && myNodeIndex != -1&&!myChatInputField.isFocused)
+			if (Input.GetKeyDown (KeyCode.C) && myNodeIndex != -1&&!myChatInputField.isFocused)
 			{
 				cameraFollowMynode = !cameraFollowMynode;
 			}
-			if (Input.GetKey (KeyCode.Z)&&!myChatInputField.isFocused)
+			if (Input.GetKey (KeyCode.Q)&&!myChatInputField.isFocused)
 				zoomIn (4.0f);
-			else if (Input.GetKey(KeyCode.X)&&!myChatInputField.isFocused)
+			else if (Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 				 zoomOut (4.0f);
-
-			if (Input.GetAxis("Mouse ScrollWheel") > 0)
-			{
-				zoomIn (7f);
-			}
-			if (Input.GetAxis("Mouse ScrollWheel") < 0)
-			{
-				zoomOut (8f);
-			}
-
 //			 to let Spectator follow one node
 			if (gameIsRunning && spectating)
 			{
-				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.X)&&!myChatInputField.isFocused)
+				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 					followingCamera = false;
 
 				if (Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)
@@ -1151,7 +1133,7 @@ public class netClientMgr : MonoBehaviour {
 				}
 //				mainCamera.transform.position = bubbles[cameraFollowNodeIndex].position;
 			}
-			if (Input.GetKeyDown(KeyCode.F1)&& myNodeIndex != -1 && bubbles[myNodeIndex].gameObject != null&&!myChatInputField.isFocused)
+			if (Input.GetKeyDown(KeyCode.F2)&& myNodeIndex != -1 && bubbles[myNodeIndex].gameObject != null&&!myChatInputField.isFocused)
 			{
 				mainCamera.orthographicSize = 150.0f;
 				Vector3 playerDefualtCamPos = new Vector3 
@@ -1204,11 +1186,6 @@ public class netClientMgr : MonoBehaviour {
 //			}    
 //		}
 
-
-
-
-
-
 		static void ChoosingMyNode()
 		{
 			CScommon.intMsg myDesiredNodeIndexNumber= new CScommon.intMsg();
@@ -1224,17 +1201,22 @@ public class netClientMgr : MonoBehaviour {
 		internal static void requestLinktoTarget()
 		{
 			CScommon.TargetNodeMsg nim = new CScommon.TargetNodeMsg ();
+
+			//We should destory all the links by pressing N When I send hand 100
 			if (Input.GetKeyDown(KeyCode.N)&&!myChatInputField.isFocused)
 			{
 				nim.nodeIndex = myNodeIndex;
+				nim.hand = 100;
 				myClient.Send (CScommon.targetNodeType, nim);
 				return;
 			}
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
-			if (Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
+			if ((Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1)) && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{	//On serverside if I send my own nodeId as the target I'll have no external link
 				nim.nodeIndex = GOspinner.closestBubbleIndexNumber ();
 				nim.linkType = CScommon.LinkType.puller;
+				nim.hand = 0;
+				if (Input.GetMouseButtonDown (1))nim.hand = 1;
 				if (Input.GetKey(KeyCode.Space)&&!myChatInputField.isFocused)
 					nim.linkType = CScommon.LinkType.pusher;
 				myClient.Send (CScommon.targetNodeType, nim);
@@ -1252,30 +1234,30 @@ public class netClientMgr : MonoBehaviour {
 		}
 
 		//static void requestToRotateMe(vectore3 rightClickMousePosition)
-		internal static void requestToRotateMe()
+		internal static void requestToRotateMe(int rotateToLminus1Rplus1)
 		{
-  
-			Vector3 mousePosInWorldCordV3 = mouseWorldPostion();
+//			Vector3 mousePosInWorldCordV3 = mouseWorldPostion();
 
 			CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
+			myDesiredRotationto.value = rotateToLminus1Rplus1;
 
-			Vector3 midPointBetweenMyTails = (bubbles[myNodeIndex+1].position + bubbles[myNodeIndex+2].position)/2;
-
-//			Vector3 midPointBetweenMyTailss = new Vector3 (midPointBetweenMyTails.x,midPointBetweenMyTails.y,0.0f);
-			float angleBetween2Points  = stdAngle(angleFromTwoPoints(mousePosInWorldCordV3,midPointBetweenMyTails)- 
-				angleFromTwoPoints(bubbles[myNodeIndex].position,midPointBetweenMyTails));
-			Debug.Log("anglebetween2points" + angleBetween2Points);
-			if(angleBetween2Points < 0){
-				myDesiredRotationto.value = 1;
-			}
-			else if (angleBetween2Points == 0)
-			{
-				myDesiredRotationto.value = 0;
-			}
-			else 
-			{
-				myDesiredRotationto.value = -1;
-			}
+			//			Vector3 midPointBetweenMyTails = (bubbles[myNodeIndex+1].position + bubbles[myNodeIndex+2].position)/2;
+//
+////			Vector3 midPointBetweenMyTailss = new Vector3 (midPointBetweenMyTails.x,midPointBetweenMyTails.y,0.0f);
+//			float angleBetween2Points  = stdAngle(angleFromTwoPoints(mousePosInWorldCordV3,midPointBetweenMyTails)- 
+//				angleFromTwoPoints(bubbles[myNodeIndex].position,midPointBetweenMyTails));
+//			Debug.Log("anglebetween2points" + angleBetween2Points);
+//			if(angleBetween2Points < 0){
+//				myDesiredRotationto.value = 1;
+//			}
+//			else if (angleBetween2Points == 0)
+//			{
+//				myDesiredRotationto.value = 0;
+//			}
+//			else 
+//			{
+//				myDesiredRotationto.value = -1;
+//			}
 			audioSourceTurning.Play ();
 			myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 		}
@@ -1321,21 +1303,21 @@ public class netClientMgr : MonoBehaviour {
 			return ray.origin + (ray.direction * distancee);
 		}
 
-		static void InversInchwomrsLink(int push1Pull2Auto0Toggle3)
-
-		{
-			CScommon.intMsg myDesiredInternalLink = new CScommon.intMsg();
-			myDesiredInternalLink.value = push1Pull2Auto0Toggle3;
-			myClient.Send (CScommon.push1Pull2MsgType, myDesiredInternalLink);
-		}
-
-		static void inchwormForwardBackWard(int forward0Backward1Toggle2)
-			
-		{
-			CScommon.intMsg myDesiredForwardOrBackward = new CScommon.intMsg();
-			myDesiredForwardOrBackward.value = forward0Backward1Toggle2;
-			myClient.Send (CScommon.forward0Reverse1Type, myDesiredForwardOrBackward);
-		}
+//		static void InversInchwomrsLink(int push1Pull2Auto0Toggle3)
+//
+//		{
+//			CScommon.intMsg myDesiredInternalLink = new CScommon.intMsg();
+//			myDesiredInternalLink.value = push1Pull2Auto0Toggle3;
+//			myClient.Send (CScommon.push1Pull2MsgType, myDesiredInternalLink);
+//		}
+//
+//		static void inchwormForwardBackWard(int forward0Backward1Toggle2)
+//			
+//		{
+//			CScommon.intMsg myDesiredForwardOrBackward = new CScommon.intMsg();
+//			myDesiredForwardOrBackward.value = forward0Backward1Toggle2;
+//			myClient.Send (CScommon.forward0Reverse1Type, myDesiredForwardOrBackward);
+//		}
 
 
 		//statistics
