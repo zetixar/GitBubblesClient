@@ -234,12 +234,13 @@ public class netClientMgr : MonoBehaviour {
 	{
 	if (myClient != null && myClient.isConnected) 
 		{
-			GUI.Label (new Rect (2, 10, 150, 100), "For keyguid hold down (F1)");
+			GUI.Label (new Rect (2, 10, 200, 100), "For keyguid hold down (F1)");
 
 			if (Input.GetKey (KeyCode.F1)&&!myChatInputField.isFocused)
 			GUI.Label (new Rect (2, 25, 320, 600),
 
 				   "\nH: start the game\n"+
+		           "Ctrl + LeftClick: canceling node selection\n" +
 		           "Tab: turn off/on chat windows\n" +
 
 				   "\nCAMERA\n"+
@@ -318,7 +319,6 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler (CScommon.gamePhaseMsgType, onGamePhaseMsg);
 		myClient.RegisterHandler(CScommon.initMsgType, onInitMsg);
 		myClient.RegisterHandler(CScommon.nodeIdMsgType, onNodeIDMsg);
-//		myClient.RegisterHandler (CScommon.requestNodeIdMsgType, onAssignedMyNodeID);
 		myClient.RegisterHandler (CScommon.initRevisionMsgType, onInitRevisionMsg);
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
@@ -389,6 +389,7 @@ public class netClientMgr : MonoBehaviour {
 			gameIsWaitingForStartFire = false;
 			if(joiningTheRuningGame)
 			{
+//				choosingNodePhase = true;
 				spectating = true;
 				return;
 			}
@@ -421,6 +422,7 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.intMsg nodeIndexMsg = netMsg.ReadMessage<CScommon.intMsg>();
 		myNodeIndex = nodeIndexMsg.value;
 		speedSlider.gameObject.SetActive(true);
+		speedSlider.value = GOspinner.myInternalMusSpeed;
 		if(myNodeIndex == -1)
 		speedSlider.gameObject.SetActive(false);
 		Debug.Log ("   my nodeIndex is " + myNodeIndex);
@@ -437,20 +439,6 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.UpdateMsg partOfupdatemsg = netMsg.ReadMessage<CScommon.UpdateMsg> ();
 		GOspinner.updatingMasterUpdateMsg(partOfupdatemsg);
 	}
-
-	public void onAssignedMyNodeID(NetworkMessage netMsg)
-	{
-		myNodeIndex = netMsg.ReadMessage<CScommon.intMsg>().value;
-		if (myNodeIndex == -1)
-		{
-			Debug.Log ("You don't have bubble");
-		}
-		else
-		{
-			GOspinner.nodePrefabCheck(myNodeIndex,false);
-		}
-	}
-
 
 	public void onLinksMsg(NetworkMessage netMsg)
 	{
@@ -510,6 +498,7 @@ public class netClientMgr : MonoBehaviour {
 		chatScrollBar.GetComponent<Scrollbar>().value = 1;
 	}
 
+	//called directly from scene in unity
 	public void MusSpeedControllerr(int myDesiredSpeed)
 	{
 		GOspinner.MusSpeedController(myDesiredSpeed);
@@ -1002,6 +991,8 @@ public class netClientMgr : MonoBehaviour {
 		static bool followingCamera = false;
 		static int cameraFollowNodeIndex = 0;
 		public static int cameraZoomOutAtStart;
+		static int steeringCounter = 5;
+
 		public static void Update()
 		{	
 			if (cameraZoomOutAtStart > 0)
@@ -1044,30 +1035,37 @@ public class netClientMgr : MonoBehaviour {
 					Debug.Log ("Turn to Right");
 				}
 				//rotate to left
-				if (Input.GetKeyDown(KeyCode.Z))
+				if (Input.GetKey(KeyCode.Z))
 				{
-					requestToRotateMe(-1);
+					if (Input.GetKeyDown(KeyCode.Z))steeringCounter = 1;
+					if(steeringCounter == 0)requestToRotateMe(-1);
+					steeringCounter--;
+					if(steeringCounter < 0)steeringCounter = 5;
+					Debug.Log(steeringCounter);
 				}
 				//rotate to right
-				if (Input.GetKeyDown(KeyCode.X))
+				if (Input.GetKey(KeyCode.X))
 				{
-					requestToRotateMe(1);
+					if (Input.GetKeyDown(KeyCode.X))steeringCounter = 1;
+					if(steeringCounter == 0)requestToRotateMe(1);
+					steeringCounter--;
+					if(steeringCounter < 0)steeringCounter = 5;
 				}
 				
 			}
 			if (!gameIsRunning || myNodeIndex < 0) return;
 			if (Input.GetAxis("Mouse ScrollWheel") > 0)
 			{
-				MusSpeedController(30);
+				MusSpeedController(10);
 			}
 			if (Input.GetAxis("Mouse ScrollWheel") < 0)
 			{
-				MusSpeedController(-30);
+				MusSpeedController(-10);
 			}
 			requestLinktoTarget ();
 		}
 
-		static int myInternalMusSpeed = 80;
+		public static int myInternalMusSpeed = 80;
 		//static int myExternalMusSpeed = 80;
 		public static void MusSpeedController(int increaseOrDecreaseSpeed)
 		{
@@ -1194,6 +1192,7 @@ public class netClientMgr : MonoBehaviour {
 			else 
 				myDesiredNodeIndexNumber.value = GOspinner.closestBubbleIndexNumber ();
 			myClient.Send (CScommon.requestNodeIdMsgType, myDesiredNodeIndexNumber);
+			Debug.Log("my desired node " + myDesiredNodeIndexNumber.value);
 			
 		}
 		//for requesting to have a specefic type of a link from 'me' to the node that is closest node 
@@ -1206,7 +1205,10 @@ public class netClientMgr : MonoBehaviour {
 			if (Input.GetKeyDown(KeyCode.N)&&!myChatInputField.isFocused)
 			{
 				nim.nodeIndex = myNodeIndex;
-				nim.hand = 100;
+				nim.hand = 0;
+				myClient.Send (CScommon.targetNodeType, nim);
+				nim.nodeIndex = myNodeIndex;
+				nim.hand = 1;
 				myClient.Send (CScommon.targetNodeType, nim);
 				return;
 			}
