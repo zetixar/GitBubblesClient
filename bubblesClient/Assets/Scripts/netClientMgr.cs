@@ -18,20 +18,16 @@ public class netClientMgr : MonoBehaviour {
 	public static bool stateChoosingServer = true;
 	public static bool stateIsConnected = false;
 	public static bool initialized = false;
-	public static bool choosingNodePhase = false;
 	public static bool spectating = false;
-	public static bool joiningTheRuningGame = true;
-	public static bool gameIsRunning = false;
 	public static bool generatingLink = false;
 
 	public InputField serverIPInputField;
 //	public string serverIP = "192.168.0.2";
-	public string serverIP = "52.91.177.74";// "127.0.0.1";
+	public string serverIP = "52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer
 	public InputField playerNickNameInputField;
 	private string playerNickName;
 
-	public InputField playerChatInputField;
-	private string myChatString;
+	private static string myChatString;
 
 	//add textholder for displaying chats.
 	private string playersChats;
@@ -57,7 +53,7 @@ public class netClientMgr : MonoBehaviour {
 
 
 	static NetworkClient myClient;
-	static CScommon.GamePhaseMsg gamePhaseMsg = new CScommon.GamePhaseMsg(); //*** I'm not sure whether I need to initilize that or not
+	static CScommon.GameSizeMsg gameSizeMsg = new CScommon.GameSizeMsg(); //*** I'm not sure whether I need to initilize that or not
 
 
 	static float camSpeed = 270.0f;
@@ -99,8 +95,8 @@ public class netClientMgr : MonoBehaviour {
 			playerNickName = playerNickNameInputField.text;
 			return;
 		}
-		if (playerChatInputField.text != string.Empty)
-			myChatString = playerChatInputField.text;
+		if (myChatInputField.text != string.Empty)
+			myChatString = myChatInputField.text;
 //		if (isAtStartup && Input.GetKeyDown(KeyCode.Tab) SetupClient();
 		if (!myChatInputField.isFocused && Input.GetKeyDown (KeyCode.F12) && myClient != null && myClient.isConnected) 
 		{
@@ -108,6 +104,11 @@ public class netClientMgr : MonoBehaviour {
 			backToChooseServerPhase();
 		}
 		controllingServerViaClient();
+		if(myChatInputField.isFocused)
+		{
+			if (Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown ("enter") || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown ("return")) 
+				sendMyChat();
+		}
 		if (initialized)
 		{
 			if(!myChatInputField.isFocused && Input.GetKeyDown(KeyCode.Tab))
@@ -130,16 +131,14 @@ public class netClientMgr : MonoBehaviour {
 	// 71/72 move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to veg nodes before launch
 	// 81/82 move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to nonveg nodes before launch
 
-	public static bool gameIsWaitingForStartFire = true;
 	public static bool eligibleToControlServer = false;
 	void controllingServerViaClient()
 	{
-		if (gameIsWaitingForStartFire && Input.GetKeyDown(KeyCode.H) && !myChatInputField.isFocused)
+		if (Input.GetKeyDown(KeyCode.H) && !myChatInputField.isFocused)
 		{
 			CScommon.intMsg gameNum = new CScommon.intMsg();
 			gameNum.value = 0;
 			myClient.Send(CScommon.restartMsgType, gameNum);
-			gameIsWaitingForStartFire = false;
 		}
 
 		if (Input.GetKey(KeyCode.RightShift)&&Input.GetKeyDown(KeyCode.Slash)&& !myChatInputField.isFocused)
@@ -191,13 +190,11 @@ public class netClientMgr : MonoBehaviour {
 		serverIP192ConnectButton.gameObject.SetActive(true);
 		initialized = false;
 		miniCamera.gameObject.SetActive(false);
-		gamePhaseMsg.numNodes = 0;
-		gamePhaseMsg.numLinks = 0;
+		gameSizeMsg.numNodes = 0;
+		gameSizeMsg.numLinks = 0;
 		if (GOspinner.bubbles != null)
 			GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
-		joiningTheRuningGame = true;
-		gamePhase1AlreadyRecieved = false;
 		speedSlider.gameObject.SetActive(false);
 	}
 
@@ -316,16 +313,15 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler(MsgType.Disconnect, OnDisconnectC);
 		//myClient.RegisterHandler(MsgType.Error, OnErrorC);
 
-		myClient.RegisterHandler (CScommon.gamePhaseMsgType, onGamePhaseMsg);
+		myClient.RegisterHandler (CScommon.gameSizeMsgType, onGameSizeMsg );
 		myClient.RegisterHandler(CScommon.initMsgType, onInitMsg);
 		myClient.RegisterHandler(CScommon.nodeIdMsgType, onNodeIDMsg);
 		myClient.RegisterHandler (CScommon.initRevisionMsgType, onInitRevisionMsg);
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
-		myClient.RegisterHandler (CScommon.nameNodeIdMsgType, onNameNodeIdMsg);
+		myClient.RegisterHandler (CScommon.nodeNamesMsgType, onNodeNamesMsg);
 		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsgType);
 		myClient.RegisterHandler (CScommon.scaleMsgType, onScaleMsgType);
-
 
 		myClient.Connect(serverIP, CScommon.serverPort);
 		audioSourceBeepSelectNodeForLink.Play ();
@@ -355,59 +351,16 @@ public class netClientMgr : MonoBehaviour {
 		backToChooseServerPhase();
 	}
 
-	public static bool setCameraOrthographicTo1600 = true;
-	public static bool gamePhase1AlreadyRecieved = false;
 
-	public void onGamePhaseMsg(NetworkMessage netMsg)
+	public void onGameSizeMsg(NetworkMessage netMsg)
 	{
-		gamePhaseMsg = netMsg.ReadMessage<CScommon.GamePhaseMsg>();
-
-
-		if (gamePhaseMsg.gamePhase == 1)
-		{
-			gamePhase1AlreadyRecieved = true;
-			setCameraOrthographicTo1600 = true;
-		}
-		if (gamePhaseMsg.gamePhase == 2 && gamePhase1AlreadyRecieved == true)
-			setCameraOrthographicTo1600 = false;
-		if (gamePhaseMsg.gamePhase == 1 || joiningTheRuningGame)
-		{
-			CScommon.stringMsg myname = new CScommon.stringMsg();
-			myname.value = playerNickName;
-			myClient.Send (CScommon.initRequestType, myname);
-//		if (GOspinner.bubbles != null)
-			GOspinner.cleanScene ();
-		//Allocating bubbles,links,oomphs etc. & MynodeIndex = -1
-			GOspinner.settingUpTheScene();
-		}
+		gameSizeMsg = netMsg.ReadMessage<CScommon.GameSizeMsg >();
+		CScommon.stringMsg myname = new CScommon.stringMsg();
+		myname.value = playerNickName;
+		myClient.Send (CScommon.initRequestType, myname);
+		GOspinner.cleanScene ();
+		GOspinner.settingUpTheScene();
 		miniCamera.gameObject.SetActive(true);
-
-		if (gamePhaseMsg.gamePhase == 2)
-		{
-			gameIsRunning = true;
-			choosingNodePhase = false;
-			gameIsWaitingForStartFire = false;
-			if(joiningTheRuningGame)
-			{
-//				choosingNodePhase = true;
-				spectating = true;
-				return;
-			}
-			if (myNodeIndex == -1)
-				spectating = true;
-			else
-				spectating = false;
-		}
-		//game is preloading or restarting, I send initRequest
-		else if (gamePhaseMsg.gamePhase == 1)
-		{	
-			joiningTheRuningGame = false;
-			choosingNodePhase = true;
-			gameIsRunning = false;
-			spectating = false;
-			gameIsWaitingForStartFire = true;
-			setCameraOrthographicTo1600 = false;
-		}
 	}
 
 	public void onInitMsg(NetworkMessage netMsg)
@@ -415,7 +368,6 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.InitMsg initMsgg = netMsg.ReadMessage<CScommon.InitMsg> ();
 		GOspinner.prepareForInitialize(initMsgg);
 		initialized = true;
-		choosingNodePhase = true;
 	}
 
 	public void onNodeIDMsg(NetworkMessage netMsg){
@@ -423,9 +375,8 @@ public class netClientMgr : MonoBehaviour {
 		myNodeIndex = nodeIndexMsg.value;
 		speedSlider.gameObject.SetActive(true);
 		speedSlider.value = GOspinner.myInternalMusSpeed;
-		if(myNodeIndex == -1)
-		speedSlider.gameObject.SetActive(false);
-		Debug.Log ("   my nodeIndex is " + myNodeIndex);
+		if(myNodeIndex == -1)speedSlider.gameObject.SetActive(false);
+		Debug.Log ("my nodeIndex is " + myNodeIndex);
 //		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
 	}
 
@@ -454,9 +405,10 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.reassignLinksPrefabs(newLinkMsg); // Done every time that I recieve onLinkMsg to fix the prefabs for bones etc. and apply setActive
 	}
 
-	public void onNameNodeIdMsg(NetworkMessage netMsg)
+
+	public void onNodeNamesMsg(NetworkMessage netMsg)
 	{
-		CScommon.NameNodeIdMsg playersNameListMsg = netMsg.ReadMessage<CScommon.NameNodeIdMsg>();
+		CScommon.NodeNamesMsg playersNameListMsg = netMsg.ReadMessage<CScommon.NodeNamesMsg>();
 		GOspinner.playerNamesManage(playersNameListMsg);
 	}
 
@@ -484,7 +436,7 @@ public class netClientMgr : MonoBehaviour {
 		myChatStringMsg.value = myChatString;
 		myClient.Send (CScommon.broadCastMsgType, myChatStringMsg);
 		Debug.Log ("my chat sent");
-		playerChatInputField.text = string.Empty;
+		myChatInputField.text = string.Empty;
 		myChatString = string.Empty;
 	}
 
@@ -525,7 +477,8 @@ public class netClientMgr : MonoBehaviour {
 		public static CScommon.LinksMsg linkMsg;
 
 		public static Dictionary<int,Transform> playersNameTransforms;
-		public static Dictionary<int,string> dicPlayerNames = new Dictionary<int, string>();
+		public static Dictionary<int,string> dicPlayerNamesIntString = new Dictionary<int, string>();
+
 
 		public static void gospinnerStart()
 		{
@@ -555,6 +508,34 @@ public class netClientMgr : MonoBehaviour {
 //				oomphs[i].Rotate(0f,0f, Random.Range (0f,90.0f));
 				oomphs [i].tag = "oomphClone";
 				oomphs [i].name = "oomph " + i;
+			}
+		}
+
+		internal static void playerNamesManage (CScommon.NodeNamesMsg partofnames)
+		{
+			for (int i = 0; i < partofnames.arry.Length; i++)
+			{
+				int NodeID = partofnames.arry[i].nodeId;
+				if(partofnames.arry[i].name == string.Empty)
+				{
+					if(GOspinner.dicPlayerNamesIntString.ContainsKey(NodeID))
+						GOspinner.dicPlayerNamesIntString.Remove(NodeID);
+					if(GOspinner.playersNameTransforms.ContainsKey(NodeID))
+					{
+						Destroy(playersNameTransforms[NodeID].gameObject);
+						playersNameTransforms.Remove(NodeID);
+					}
+					return;
+				}
+				GOspinner.dicPlayerNamesIntString.Add(NodeID,partofnames.arry[i].name);
+				playersNameTransforms.Add
+					(NodeID,((Transform)Instantiate (pfPlayerName, bubbles[NodeID].position, Quaternion.identity)));
+				playersNameTransforms[NodeID].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[NodeID];
+				playersNameTransforms[NodeID].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[NodeID];
+				playersNameTransforms[NodeID].name = "playerName" + NodeID +" " + GOspinner.dicPlayerNamesIntString[NodeID];
+				playersNameTransforms[NodeID].tag = "PlayerName";
 			}
 		}
 
@@ -591,39 +572,37 @@ public class netClientMgr : MonoBehaviour {
 
 		public static void settingUpTheScene()
 		{
-			GOspinner.bubbles = new Transform[gamePhaseMsg.numNodes];
-			GOspinner.oomphs = new Transform[gamePhaseMsg.numNodes];
-			GOspinner.links = new GameObject[gamePhaseMsg.numLinks];
-			
+			GOspinner.bubbles = new Transform[gameSizeMsg.numNodes];
+			GOspinner.oomphs = new Transform[gameSizeMsg.numNodes];
+			GOspinner.links = new GameObject[gameSizeMsg.numLinks];
+
+
 			GOspinner.initMsg = new CScommon.InitMsg();
-			GOspinner.initMsg.nodeData = new CScommon.StaticNodeData[gamePhaseMsg.numNodes];
+			GOspinner.initMsg.nodeData = new CScommon.StaticNodeData[gameSizeMsg.numNodes];
 			
 			GOspinner.updateMsg = new CScommon.UpdateMsg();
-			GOspinner.updateMsg.nodeData = new CScommon.DynamicNodeData[gamePhaseMsg.numNodes];
+			GOspinner.updateMsg.nodeData = new CScommon.DynamicNodeData[gameSizeMsg.numNodes];
 			
 			GOspinner.linkMsg = new CScommon.LinksMsg();
-			GOspinner.linkMsg.links = new CScommon.LinkInfo[gamePhaseMsg.numLinks];
+			GOspinner.linkMsg.links = new CScommon.LinkInfo[gameSizeMsg.numLinks];
 			
-			GOspinner.dicPlayerNames = new Dictionary<int, string>();
+			GOspinner.dicPlayerNamesIntString = new Dictionary<int, string>();
 			GOspinner.playersNameTransforms = new Dictionary<int, Transform>();
+
 			GOspinner.resetGameStats();
 
 		}
 		
 		internal static void resetGameStats() {
-			if(setCameraOrthographicTo1600){
-				myNodeIndex = -1;
-				mainCamera.orthographicSize = 1600.0f;
-				mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
-				cameraZoomOutAtStart = 105;
-			}
-			gameIsRunning = false;
+			myNodeIndex = -1;
+			mainCamera.orthographicSize = 1600.0f;
+			mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
+			cameraZoomOutAtStart = 120;
 			generatingLink = true;
 			initialized = false;
 			cameraFollowMynode = false;
 			cameraFollowNodeIndex = 0;
 			followingCamera = false;
-			setCameraOrthographicTo1600 =false;
 		}
 
 		public static void nodePrefabCheck(int i, bool add)
@@ -678,22 +657,20 @@ public class netClientMgr : MonoBehaviour {
 		{
 			for (int i = 0; i < initrevmassege.nodeInfo.Length; i++) 
 			{
-				//For distroying previous playerName game object and also cleaning the list of names.
-				if(dicPlayerNames.ContainsKey(initrevmassege.nodeInfo[i].nodeIndex)&& 
-				   !((CScommon.testBit (initrevmassege.nodeInfo [i].staticNodeData.dna, CScommon.snarkBit))||
-					CScommon.testBit (initrevmassege.nodeInfo [i].staticNodeData.dna, CScommon.playerPlayingBit)))
-				{
-					Destroy(playersNameTransforms[initrevmassege.nodeInfo[i].nodeIndex].gameObject);
-					dicPlayerNames.Remove(initrevmassege.nodeInfo[i].nodeIndex);
-					playersNameTransforms.Remove(initrevmassege.nodeInfo[i].nodeIndex);
-				}
-
-				//updating initmsg with new changes that I get from initrevmessage
-				initMsg.nodeData [initrevmassege.nodeInfo [i].nodeIndex] = initrevmassege.nodeInfo [i].staticNodeData;
-				//destorying gameobjects that are going to be updated
-				Destroy (bubbles[initrevmassege.nodeInfo[i].nodeIndex].gameObject);
-				//instantiating new gameobjects according to initRivisionMsg
 				int j = initrevmassege.nodeInfo [i].nodeIndex;
+				//For destroying previous playerName game object and also cleaning the list of names.
+				if(dicPlayerNamesIntString.ContainsKey(j)&& 
+				   !CScommon.testBit (initrevmassege.nodeInfo [i].staticNodeData.dna, CScommon.playerPlayingBit))
+				{
+					Destroy(playersNameTransforms[j].gameObject);
+					dicPlayerNamesIntString.Remove(j);
+					playersNameTransforms.Remove(j);
+				}
+				//updating initmsg with new changes that I get from initrevmessage
+				initMsg.nodeData [j] = initrevmassege.nodeInfo [i].staticNodeData;
+				//destorying gameobjects that are going to be updated
+				Destroy (bubbles[j].gameObject);
+				//instantiating new gameobjects according to initRivisionMsg
 				nodePrefabCheck(j, false);
 			}
 		}
@@ -711,7 +688,7 @@ public class netClientMgr : MonoBehaviour {
 
 		public static void generateLinks()
 		{
-			//linkMsg.links.Length >> I got this data during onGamePhaseMsg()
+			//linkMsg.links.Length >> I got this data during gameSizeMsg()
 			for (int i = 0; i < linkMsg.links.Length; i++)
 			{ 
 				links[i] = (GameObject) Instantiate(pfExPullLink.gameObject,Vector3.zero,Quaternion.identity) as GameObject;
@@ -901,63 +878,6 @@ public class netClientMgr : MonoBehaviour {
 			return angle;
 		}
 
-		public static void playerNamesManage(CScommon.NameNodeIdMsg playersNameListMsg)
-		{	
-			int playerNodeID = playersNameListMsg.nodeIndex;
-			// updating dictionary dicPlayersNames 
-			if (dicPlayerNames.ContainsKey(playerNodeID))
-				dicPlayerNames.Remove(playerNodeID);
-			dicPlayerNames.Add(playerNodeID,playersNameListMsg.name);
-
-			//instantiating or updating playerNameTransform
-
-			foreach(int playerID in playersNameTransforms.Keys)
-			{
-				if(!dicPlayerNames.ContainsKey(playerID))
-				{
-					Destroy(playersNameTransforms[playerNodeID].gameObject);
-					playersNameTransforms.Remove(playerNodeID);
-				}
-			}
-			if (!playersNameTransforms.ContainsKey(playerNodeID))
-			{
-				playersNameTransforms.Add
-					(playerNodeID,((Transform)Instantiate (pfPlayerName, bubbles[playerNodeID].position, Quaternion.identity)));
-			}
-
-			playersNameTransforms[playerNodeID].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-				dicPlayerNames[playerNodeID];// + " " + updateMsg.nodeData[playerNodeID].oomph.ToString();
-			playersNameTransforms[playerNodeID].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-				dicPlayerNames[playerNodeID];
-//
-//			if (playerNodeID == myNodeIndex)
-//				playersNameTransforms[playerNodeID].FindChild("playerNameMiniMap").GetComponent<TextMesh>().color =
-//					Color.blue;
-//			else 
-//				playersNameTransforms[playerNodeID].FindChild("playerNameMiniMap").GetComponent<TextMesh>().color =
-//					Color.red;
-
-
-			playersNameTransforms[playerNodeID].name = "playerName" + playerNodeID;
-			playersNameTransforms[playerNodeID].tag = "PlayerName";
-
-
-			//I should check if I need to instantiate the prefab or not. If I don't need that, I just change the colour or
-			//the text of existing prefab
-			//I also can let players to change their names while they are in choosingNodePhase and it would be up to
-			//the server to decide whether they can have a new name or not
-//				string minusScoreText = dicPlayerNames[playersNameListMsg.nodeIndex].
-//					Substring(dicPlayerNames[playersNameListMsg.nodeIndex].Length - 1);
-//				int minusScoreInt = 0; int.TryParse(minusScoreText, out minusScoreInt);
-//				Debug.Log (minusScoreInt + minusScoreText);
-//				bubbles[playersNameListMsg.nodeIndex].FindChild("playerNameMesh").GetComponent<TextMesh>().color =
-//					Color.blue;
-//				if ( minusScoreInt > 2)
-//				{
-//					bubbles[playersNameListMsg.nodeIndex].FindChild("playerNameMesh").GetComponent<TextMesh>().color =
-//						Color.blue;
-//				}
-			}
 
 		private static int displayNames = 0; // 0 display all, 1 display only on minimap, 2 display only on main scene, 3 don't displaythem
 		private static void changeHowToDisPlayPlayersName()
@@ -989,8 +909,8 @@ public class netClientMgr : MonoBehaviour {
 		}
 
 		static bool followingCamera = false;
+		static int cameraZoomOutAtStart = 120;
 		static int cameraFollowNodeIndex = 0;
-		public static int cameraZoomOutAtStart;
 		static int steeringCounter = 5;
 
 		public static void Update()
@@ -1001,25 +921,27 @@ public class netClientMgr : MonoBehaviour {
 				cameraZoomOutAtStart --;
 				return;
 			}
-			if (choosingNodePhase && Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)ChoosingMyNode ();
+			//Ctrl + Click = choose my node, Ctrl + Shift + Click = dismount and be spectator
+			if ((Input.GetKey (KeyCode.LeftControl)|| Input.GetKey (KeyCode.LeftControl)) && Input.GetMouseButtonDown (0)
+			    &&!myChatInputField.isFocused)
+				ChoosingMyNode ();
 			cameraMover ();
 			positioning ();
 			updateLinksPosRotScale();
-
 			if(!myChatInputField.isFocused)
 			{
-
-				if (Input.GetKeyDown(KeyCode.B))
-				{
-					MusSpeedController(myInternalMusSpeed * -1);
-				}
 				if (Input.GetKeyDown(KeyCode.F7))
 				{
 					displayNames++;
 					if (displayNames > 3) displayNames = 0;
 					changeHowToDisPlayPlayersName();
 				}
-
+	// all the things bellow this line are for player and all the things above it are for both player and spectator
+				if (myNodeIndex < 0) return;
+				if (Input.GetKeyDown(KeyCode.B))
+				{
+					MusSpeedController(-2 * myInternalMusSpeed);
+				}
 				if (Input.GetKeyDown(KeyCode.U))
 				{
 					CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
@@ -1051,9 +973,7 @@ public class netClientMgr : MonoBehaviour {
 					steeringCounter--;
 					if(steeringCounter < 0)steeringCounter = 5;
 				}
-				
 			}
-			if (!gameIsRunning || myNodeIndex < 0) return;
 			if (Input.GetAxis("Mouse ScrollWheel") > 0)
 			{
 				MusSpeedController(10);
@@ -1094,7 +1014,7 @@ public class netClientMgr : MonoBehaviour {
 				mainCamera.transform.Translate(new Vector3(0,(Input.GetAxis("Vertical"))*camSpeed * Time.deltaTime,0));
 				}
 
-			if (cameraFollowMynode && bubbles[myNodeIndex].gameObject != null)
+			if (cameraFollowMynode && myNodeIndex >= 0 && bubbles[myNodeIndex].gameObject != null)
 			{	Vector3 playerDefualtCamPos = new Vector3 
 					(bubbles[myNodeIndex].transform.position.x,
 					 bubbles[myNodeIndex].transform.position.y,
@@ -1110,7 +1030,7 @@ public class netClientMgr : MonoBehaviour {
 			else if (Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 				 zoomOut (4.0f);
 //			 to let Spectator follow one node
-			if (gameIsRunning && spectating)
+			if (spectating)
 			{
 				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 					followingCamera = false;
@@ -1187,7 +1107,7 @@ public class netClientMgr : MonoBehaviour {
 		static void ChoosingMyNode()
 		{
 			CScommon.intMsg myDesiredNodeIndexNumber= new CScommon.intMsg();
-			if (Input.GetKey (KeyCode.LeftControl)&&!myChatInputField.isFocused)
+			if ((Input.GetKey (KeyCode.LeftShift)|| Input.GetKey(KeyCode.RightShift))&&!myChatInputField.isFocused)
 				myDesiredNodeIndexNumber.value = -1;
 			else 
 				myDesiredNodeIndexNumber.value = GOspinner.closestBubbleIndexNumber ();

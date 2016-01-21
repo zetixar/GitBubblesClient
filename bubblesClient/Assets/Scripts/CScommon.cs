@@ -18,8 +18,8 @@ public static class CScommon {
 	//public const short keyMsgType = 308; // unused, could send client keypresses to server
 	public const short initRevisionMsgType = 309; //InitRevisionMsg, server sends to all clients infrequently, to update relatively static initMsg data.
 	public const short requestNodeIdMsgType = 310; //intMsg, client requests being associated with a given bubble. Server responds with nodeIDMsgType.
-	public const short gamePhaseMsgType = 311; //GamePhaseMsg, where gamephase 1: pregame, 2: running, numNodes, numLinks, worldRadius
-	public const short nameNodeIdMsgType = 312; //NameNodeIdMsg, unimplemented, intended to tell all clients what user name is associated with what bubble
+	public const short gameSizeMsgType = 311; //GamePhaseMsg, where gamephase 1: pregame, 2: running, numNodes, numLinks, worldRadius
+	public const short nodeNamesMsgType = 312; //NameNodeIdMsg, unimplemented, intended to tell all clients what user name is associated with what bubble
 	public const short turnMsgType = 313; //intMsg, -1 means change direction a bit to the left, +1 means a bit to the right, 0 indicates go straight.
 	public const short forward0Reverse1Type = 314; //intMsg, 0 means forward, 1 means reverse. 2 means toggle.
 	public const short linksMsgType = 315; //linksMsg
@@ -28,7 +28,6 @@ public static class CScommon {
 	public const short speedMsgType = 317; //intMsg, sent from client to change percent (0 to 300) of it's muscles demand
 	public const short broadCastMsgType = 318; //stringMsg, sent from client to server, and rebroadcast by server to all clients.
 	public const short scaleMsgType = 319; //stringMsg, sent from server to all clients whenever scales are set or changed, a very succinct summary of scales
-
 
 //  Summary of messagery:
 	
@@ -68,16 +67,23 @@ public static class CScommon {
 		public KeyCode keyCode;
 	}
 
-	public class GamePhaseMsg: MessageBase {
-		public int gamePhase;
+	public class GameSizeMsg : MessageBase {
 		public int numNodes;
 		public int numLinks;
+		public int numNames;
 		public float worldRadius;
 	}
 
 	public class NameNodeIdMsg : MessageBase{
 		public string name;
 		public int nodeIndex;
+	}
+	public struct nodeName{
+		public int nodeId;
+		public string name;
+	}
+	public class NodeNamesMsg: MessageBase{
+		public nodeName[] arry;
 	}
 
 //	public class LinkTypeMsg : MessageBase {
