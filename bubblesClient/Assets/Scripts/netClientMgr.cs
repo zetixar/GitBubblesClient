@@ -23,7 +23,7 @@ public class netClientMgr : MonoBehaviour {
 
 	public InputField serverIPInputField;
 //	public string serverIP = "192.168.0.2";
-	public string serverIP = "52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer
+	public string serverIP = "52.90.140.113";//"52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer
 	public InputField playerNickNameInputField;
 	private string playerNickName;
 
@@ -354,7 +354,7 @@ public class netClientMgr : MonoBehaviour {
 
 	public void onGameSizeMsg(NetworkMessage netMsg)
 	{
-		gameSizeMsg = netMsg.ReadMessage<CScommon.GameSizeMsg >();
+		gameSizeMsg = netMsg.ReadMessage<CScommon.GameSizeMsg>();
 		CScommon.stringMsg myname = new CScommon.stringMsg();
 		myname.value = playerNickName;
 		myClient.Send (CScommon.initRequestType, myname);
@@ -525,7 +525,7 @@ public class netClientMgr : MonoBehaviour {
 						Destroy(playersNameTransforms[NodeID].gameObject);
 						playersNameTransforms.Remove(NodeID);
 					}
-					return;
+					continue;
 				}
 				GOspinner.dicPlayerNamesIntString.Add(NodeID,partofnames.arry[i].name);
 				playersNameTransforms.Add
