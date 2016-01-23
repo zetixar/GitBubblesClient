@@ -48,6 +48,12 @@ public class netClientMgr : MonoBehaviour {
 	public static Slider speedSlider;
 	public Text speedValueText;
 
+	public Image minimapImage;
+	public Button keyGuide;
+	public Image keyGuideImage;
+
+
+
 
 
 
@@ -79,7 +85,12 @@ public class netClientMgr : MonoBehaviour {
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
 		speedValueText.text = speedSlider.value.ToString();
+		minimapImage.gameObject.SetActive(false);
+		keyGuide.gameObject.SetActive(false);
+		keyGuideImage.gameObject.SetActive(false);
+		keyGuideImageDisplaybool = false;
 
+		
 		mainCamera = Camera.main;
 		//setting up the prefabs
 		GOspinner.gospinnerStart();
@@ -196,6 +207,12 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
 		speedSlider.gameObject.SetActive(false);
+		minimapImage.gameObject.SetActive(false);
+		keyGuide.gameObject.SetActive(false);
+		keyGuideImage.gameObject.SetActive(false);
+
+		
+		
 	}
 
 	//called by btn in the scene
@@ -231,13 +248,14 @@ public class netClientMgr : MonoBehaviour {
 	{
 	if (myClient != null && myClient.isConnected) 
 		{
-			GUI.Label (new Rect (2, 10, 200, 100), "For keyguid hold down (F1)");
+			GUI.Label (new Rect (2, 25, 200, 100), "KeyGuide(F1)");
 
 			if (Input.GetKey (KeyCode.F1)&&!myChatInputField.isFocused)
-			GUI.Label (new Rect (2, 25, 320, 600),
+			GUI.Label (new Rect (2, 40, 320, 600),
 
 				   "\nH: start the game\n"+
-		           "Ctrl + LeftClick: canceling node selection\n" +
+		           "Ctrl + + LeftClick: canceling node selection\n" +
+		           "Ctrl + + Shift + LeftClick: canceling node selection\n" +
 		           "Tab: turn off/on chat windows\n" +
 
 				   "\nCAMERA\n"+
@@ -320,8 +338,9 @@ public class netClientMgr : MonoBehaviour {
 		myClient.RegisterHandler(CScommon.updateMsgType, onUpdateMsg);
 		myClient.RegisterHandler (CScommon.linksMsgType, onLinksMsg);
 		myClient.RegisterHandler (CScommon.nodeNamesMsgType, onNodeNamesMsg);
-		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsgType);
-		myClient.RegisterHandler (CScommon.scaleMsgType, onScaleMsgType);
+		myClient.RegisterHandler (CScommon.broadCastMsgType, onBroadCastMsg);
+		myClient.RegisterHandler (CScommon.scaleMsgType, onScaleMsg);
+		myClient.RegisterHandler (CScommon.scoreMsgType, onScoreMsg);
 
 		myClient.Connect(serverIP, CScommon.serverPort);
 		audioSourceBeepSelectNodeForLink.Play ();
@@ -342,7 +361,12 @@ public class netClientMgr : MonoBehaviour {
 		audioSourceTurning.Play();
 		debugingDisplayHistroy = new List<string>();
 		chatHistory = new List<string>();
-		displayChatWindows(true);
+//		displayChatWindows(true);
+		minimapImage.gameObject.SetActive(true);
+		keyGuide.gameObject.SetActive(true);
+		keyGuideImage.gameObject.SetActive(false);
+		keyGuideImageDisplaybool = false;
+		spectating = true;
 	}
 
 	public void OnDisconnectC(NetworkMessage info)
@@ -375,7 +399,11 @@ public class netClientMgr : MonoBehaviour {
 		myNodeIndex = nodeIndexMsg.value;
 		speedSlider.gameObject.SetActive(true);
 		speedSlider.value = GOspinner.myInternalMusSpeed;
-		if(myNodeIndex == -1)speedSlider.gameObject.SetActive(false);
+		spectating = false;
+		if(myNodeIndex == -1)
+		{
+			speedSlider.gameObject.SetActive(false);
+		}
 		Debug.Log ("my nodeIndex is " + myNodeIndex);
 //		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
 	}
@@ -412,7 +440,7 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.playerNamesManage(playersNameListMsg);
 	}
 
-	public void onBroadCastMsgType(NetworkMessage netMsg)
+	public void onBroadCastMsg(NetworkMessage netMsg)
 	{
 		CScommon.stringMsg recievedNewChat = netMsg.ReadMessage<CScommon.stringMsg>();
 		chatHistory.Add(recievedNewChat.value);
@@ -423,11 +451,22 @@ public class netClientMgr : MonoBehaviour {
 		displayChatWindows(true);
 	}
 
-	public void onScaleMsgType(NetworkMessage netMsg)
+	public void onScaleMsg(NetworkMessage netMsg)
 	{
 		string scaleString = netMsg.ReadMessage<CScommon.stringMsg>().value;
 		debugingDesplayinScrollView(scaleString);
 	}
+
+
+	public void onScoreMsg(NetworkMessage netMsg)
+	{
+		CScommon.ScoreMsg scoreMsg = netMsg.ReadMessage<CScommon.ScoreMsg>();
+		GOspinner.scoreManager(scoreMsg);
+	}
+
+
+
+
 
 	public void sendMyChat()
 	{	
@@ -457,6 +496,17 @@ public class netClientMgr : MonoBehaviour {
 		speedValueText.text = speedSlider.value.ToString();	
 	}
 
+	bool keyGuideImageDisplaybool = false;
+	public void displayKeyGuideImage()
+	{
+		keyGuideImageDisplaybool = !keyGuideImageDisplaybool;
+		keyGuideImage.gameObject.SetActive(keyGuideImageDisplaybool);
+	}
+
+
+
+
+
 //GOSPINNER *************************************** GOSPINNER\\ 
 	private static class GOspinner {
 
@@ -475,7 +525,7 @@ public class netClientMgr : MonoBehaviour {
 		public static CScommon.UpdateMsg updateMsg;
 		public static CScommon.InitMsg initMsg;
 		public static CScommon.LinksMsg linkMsg;
-
+		public static Dictionary<int,CScommon.ScoreStruct> scoreMsgGOspinner; //int = nodeID
 		public static Dictionary<int,Transform> playersNameTransforms;
 		public static Dictionary<int,string> dicPlayerNamesIntString = new Dictionary<int, string>();
 
@@ -515,27 +565,25 @@ public class netClientMgr : MonoBehaviour {
 		{
 			for (int i = 0; i < partofnames.arry.Length; i++)
 			{
-				int NodeID = partofnames.arry[i].nodeId;
-				if(partofnames.arry[i].name == string.Empty)
+				int nodeId = partofnames.arry[i].nodeId;
+
+				if(GOspinner.dicPlayerNamesIntString.ContainsKey(nodeId))
+					GOspinner.dicPlayerNamesIntString.Remove(nodeId);
+				if(GOspinner.playersNameTransforms.ContainsKey(nodeId))
 				{
-					if(GOspinner.dicPlayerNamesIntString.ContainsKey(NodeID))
-						GOspinner.dicPlayerNamesIntString.Remove(NodeID);
-					if(GOspinner.playersNameTransforms.ContainsKey(NodeID))
-					{
-						Destroy(playersNameTransforms[NodeID].gameObject);
-						playersNameTransforms.Remove(NodeID);
-					}
-					continue;
+					Destroy(playersNameTransforms[nodeId].gameObject);
+					playersNameTransforms.Remove(nodeId);
 				}
-				GOspinner.dicPlayerNamesIntString.Add(NodeID,partofnames.arry[i].name);
+				if(partofnames.arry[i].name == string.Empty)continue;
+				GOspinner.dicPlayerNamesIntString.Add(nodeId,partofnames.arry[i].name);
 				playersNameTransforms.Add
-					(NodeID,((Transform)Instantiate (pfPlayerName, bubbles[NodeID].position, Quaternion.identity)));
-				playersNameTransforms[NodeID].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[NodeID];
-				playersNameTransforms[NodeID].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[NodeID];
-				playersNameTransforms[NodeID].name = "playerName" + NodeID +" " + GOspinner.dicPlayerNamesIntString[NodeID];
-				playersNameTransforms[NodeID].tag = "PlayerName";
+					(nodeId,((Transform)Instantiate (pfPlayerName, bubbles[nodeId].position, Quaternion.identity)));
+				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].name = "playerName" + nodeId +" " + GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].tag = "PlayerName";
 			}
 		}
 
@@ -588,6 +636,8 @@ public class netClientMgr : MonoBehaviour {
 			
 			GOspinner.dicPlayerNamesIntString = new Dictionary<int, string>();
 			GOspinner.playersNameTransforms = new Dictionary<int, Transform>();
+			GOspinner.scoreMsgGOspinner = new Dictionary<int, CScommon.ScoreStruct>();
+
 
 			GOspinner.resetGameStats();
 
@@ -686,6 +736,27 @@ public class netClientMgr : MonoBehaviour {
 				}
 		}
 
+		public static void scoreManager(CScommon.ScoreMsg scoreMsg)
+		{
+
+			for(int i=0; i < scoreMsg.arry.Length; i++)
+			{
+				int nodeId = scoreMsg.arry[i].nodeId;
+				Debug.Log (nodeId);
+				if(scoreMsgGOspinner.ContainsKey(nodeId)) scoreMsgGOspinner.Remove(nodeId); 
+				if(!scoreMsg.zeroAteOne)continue;
+				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
+				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
+				//I'll get scoreMsg with zero for this node and I'll replace previous score with new one which is zero.
+				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString();
+				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString();
+				Debug.Log (GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString());
+
+			}
+		}
+
 		public static void generateLinks()
 		{
 			//linkMsg.links.Length >> I got this data during gameSizeMsg()
@@ -737,18 +808,23 @@ public class netClientMgr : MonoBehaviour {
 			CScommon.LinkInfo linkInfo = linkMsg.links [i];
 				links[linkInfo.linkId].transform.position = 
 					(bubbles[linkInfo.linkData.sourceId].position +
-					 bubbles[linkInfo.linkData.targetId].position)/2;
+					 bubbles[linkInfo.linkData.targetId].position)/2.0f;
 
 //public static float rawStrength(float oomph, float maxOomph, long dna, float radiusSquared, float linkLengthSquared)
+//			links[linkInfo.linkId].transform.localScale = new Vector3(
+///*vectore3.x*/		((CScommon.rawStrength
+//					(updateMsg.nodeData[linkInfo.linkData.sourceId].oomph,
+//					CScommon.maxOomph(initMsg.nodeData[linkInfo.linkData.sourceId].radius,0L),
+//					initMsg.nodeData[linkInfo.linkData.sourceId].dna,
+//					Mathf.Pow (initMsg.nodeData[linkInfo.linkData.sourceId].radius,2.0f),
+//					distance2(bubbles[linkInfo.linkData.sourceId].position, bubbles[linkInfo.linkData.targetId].position))))
+//					* linkscalefactor,
+///*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 1.2f,
+///*vectore3.z*/		0.0f);
 			links[linkInfo.linkId].transform.localScale = new Vector3(
-/*vectore3.x*/		((CScommon.rawStrength
-					(updateMsg.nodeData[linkInfo.linkData.sourceId].oomph,
-					CScommon.maxOomph(initMsg.nodeData[linkInfo.linkData.sourceId].radius,0L),
-					initMsg.nodeData[linkInfo.linkData.sourceId].dna,
-					Mathf.Pow (initMsg.nodeData[linkInfo.linkData.sourceId].radius,2.0f),
-					distance2(bubbles[linkInfo.linkData.sourceId].position, bubbles[linkInfo.linkData.targetId].position))))
-					* linkscalefactor,
-/*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 1.2f,
+					2.0f,
+/*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 0.17f,// * 1.2f,
+//					(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude,
 /*vectore3.z*/		0.0f);
 
 
