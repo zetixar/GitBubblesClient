@@ -645,9 +645,9 @@ public class netClientMgr : MonoBehaviour {
 		
 		internal static void resetGameStats() {
 			myNodeIndex = -1;
-			mainCamera.orthographicSize = 1600.0f;
+			mainCamera.orthographicSize = 1400.0f;
 			mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
-			cameraZoomOutAtStart = 120;
+			cameraZoomOutAtStart = 80;
 			generatingLink = true;
 			initialized = false;
 			cameraFollowMynode = false;
@@ -744,15 +744,15 @@ public class netClientMgr : MonoBehaviour {
 				int nodeId = scoreMsg.arry[i].nodeId;
 				Debug.Log (nodeId);
 				if(scoreMsgGOspinner.ContainsKey(nodeId)) scoreMsgGOspinner.Remove(nodeId); 
-				if(!scoreMsg.zeroAteOne)continue;
+//				if(!scoreMsg.zeroAteOne)continue;
 				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
 				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
 				//I'll get scoreMsg with zero for this node and I'll replace previous score with new one which is zero.
 				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString();
+					GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString();
 				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString();
-				Debug.Log (GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+"-" + scoreMsg.arry[i].minus.ToString());
+					GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString();
+				Debug.Log (GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString());
 
 			}
 		}
@@ -985,7 +985,7 @@ public class netClientMgr : MonoBehaviour {
 		}
 
 		static bool followingCamera = false;
-		static int cameraZoomOutAtStart = 120;
+		static int cameraZoomOutAtStart = 80;
 		static int cameraFollowNodeIndex = 0;
 		static int steeringCounter = 5;
 
@@ -1102,9 +1102,9 @@ public class netClientMgr : MonoBehaviour {
 				cameraFollowMynode = !cameraFollowMynode;
 			}
 			if (Input.GetKey (KeyCode.Q)&&!myChatInputField.isFocused)
-				zoomIn (4.0f);
+				zoomIn (2f);
 			else if (Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
-				 zoomOut (4.0f);
+				 zoomOut (2f);
 //			 to let Spectator follow one node
 			if (spectating)
 			{
@@ -1142,14 +1142,26 @@ public class netClientMgr : MonoBehaviour {
 		static void zoomIn(float camorthsizeminus) {
 			if (mainCamera.orthographicSize > 14.0f)
 			{
-				mainCamera.orthographicSize -= camorthsizeminus;
+				if(mainCamera.orthographicSize < 100)
+				{
+					mainCamera.orthographicSize -= (camorthsizeminus / 2.0f);
+				}
+				else
+					mainCamera.orthographicSize -= camorthsizeminus;
+				if (mainCamera.orthographicSize < 14.0f) mainCamera.orthographicSize = 14.0f;
 			}
 		}
 		
 		static void zoomOut(float camorthsizeplus) {
 			if (mainCamera.orthographicSize < 700.0f)
-			{
+			{	
+				if(mainCamera.orthographicSize < 100)
+				{
+					mainCamera.orthographicSize += (camorthsizeplus / 2.0f);
+				}
+			else
 				mainCamera.orthographicSize += camorthsizeplus;
+				if (mainCamera.orthographicSize > 700.0f) mainCamera.orthographicSize = 700.0f;
 			}
 		}
 
