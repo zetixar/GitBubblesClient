@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 73a40391458e7d046b4456eee95e0183
-timeCreated: 1453409724
+timeCreated: 1453476173
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
@@ -198,6 +198,36 @@ TextureImporter:
         y: 1057
         width: 173
         height: 173
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: new sprite_7
+      rect:
+        serializedVersion: 2
+        x: 924
+        y: 583
+        width: 28
+        height: 29
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: new sprite_8
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 581
+        width: 33
+        height: 33
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: new sprite_9
+      rect:
+        serializedVersion: 2
+        x: 1012
+        y: 584
+        width: 34
+        height: 31
       alignment: 0
       pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}
