@@ -68,22 +68,39 @@ public class netClientMgr : MonoBehaviour {
 	// define the audio clips
 	public AudioClip clipBeepSelectNodeForLink;
 	public AudioClip clipTurning;
+	public AudioClip clipEatingOthersPV;
+	public AudioClip clipGetEatenByOthersPV;
+	public AudioClip clipGameSizePV;
 
 	static AudioSource audioSourceBeepSelectNodeForLink;
 	static AudioSource audioSourceTurning;
+	static AudioSource mainCamAudioSource;
+	static AudioClip clipEatingOthers;
+	static AudioClip clipGetEatenByOthers;
+	static AudioClip clipGameSize;
+
 
 	public Camera miniCamera;
 
 	void Start()
 	{
+		mainCamera = Camera.main;
 		serverIPInputField.placeholder.GetComponent<Text>().text = serverIP;
 		serverIPInputField.text = serverIPInputField.placeholder.GetComponent<Text>().text;
 		myChatInputField = GameObject.Find("ChatInput").GetComponent<InputField>();
 		speedSlider = GameObject.Find("SpeedSlider").GetComponent<Slider>();
 		myChatInputField.gameObject.SetActive(false);
 		speedSlider.gameObject.SetActive(false);
+
+
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
+		mainCamAudioSource = mainCamera.GetComponent<AudioSource>();
+		clipEatingOthers = clipEatingOthersPV;//AddAudio(clipEatingOthersPV,false,false,0.5f);
+		clipGetEatenByOthers = clipGetEatenByOthersPV;
+		clipGameSize = clipGameSizePV;
+
+
 		speedValueText.text = speedSlider.value.ToString();
 		minimapImage.gameObject.SetActive(false);
 		keyGuide.gameObject.SetActive(false);
@@ -91,10 +108,9 @@ public class netClientMgr : MonoBehaviour {
 		keyGuideImageDisplaybool = false;
 
 		
-		mainCamera = Camera.main;
+
 		//setting up the prefabs
 		GOspinner.gospinnerStart();
-
 	}
 
 	void Update () 
@@ -385,6 +401,9 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
 		miniCamera.gameObject.SetActive(true);
+
+		mainCamAudioSource.clip = clipGameSize;
+		mainCamAudioSource.Play();
 	}
 
 	public void onInitMsg(NetworkMessage netMsg)
@@ -742,8 +761,23 @@ public class netClientMgr : MonoBehaviour {
 			for(int i=0; i < scoreMsg.arry.Length; i++)
 			{
 				int nodeId = scoreMsg.arry[i].nodeId;
-				Debug.Log (nodeId);
-				if(scoreMsgGOspinner.ContainsKey(nodeId)) scoreMsgGOspinner.Remove(nodeId); 
+
+				if(scoreMsgGOspinner.ContainsKey(nodeId)) 
+				{
+					if(nodeId == myNodeIndex && scoreMsg.arry[i].plus > scoreMsgGOspinner[nodeId].plus)
+					{
+//						clipEatingOthers.Play();
+						bubbles[nodeId].GetComponent<AudioSource>().clip = clipEatingOthers;
+						bubbles[nodeId].GetComponent<AudioSource>().Play();
+					}
+					if(nodeId == myNodeIndex && scoreMsg.arry[i].minus > scoreMsgGOspinner[nodeId].minus)
+					{
+//						clipEatingOthers.Play();
+						bubbles[nodeId].GetComponent<AudioSource>().clip = clipGetEatenByOthers;
+						bubbles[nodeId].GetComponent<AudioSource>().Play();
+					}
+					scoreMsgGOspinner.Remove(nodeId); 
+				}
 //				if(!scoreMsg.zeroAteOne)continue;
 				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
 				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
@@ -753,7 +787,6 @@ public class netClientMgr : MonoBehaviour {
 				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
 					GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString();
 				Debug.Log (GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString());
-
 			}
 		}
 
