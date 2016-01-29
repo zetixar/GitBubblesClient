@@ -10,13 +10,12 @@ public static class CScommon {
 	public const short nodeIdMsgType = 300; //intMsg, server tells a client which bubble they are associated with, often in response to their requestNodeIdMsg
 	public const short updateMsgType = 301; //UpdateMsg, server sends to all clients frequently to update positions of bubbles. Uses DynamicNodeData[]
 	public const short scoreMsgType = 302; //server sends player scores to client
-	//public const short worldRadiusMsgType = 302; //was vegFlipType, an early debugging effort
 	public const short targetNodeType = 303; //TargetNodeMsg, client tells server that they want a link made from their bubble to a given target bubble
 	//public const short lookAtNodeType = 304; //unused
 	public const short initMsgType = 305; // InitMsg, server sends to clients relatively static info on many bubbles.
 	public const short initRequestType = 306; //stringMsg containing a name. Client affirms having received gameSizeMsg, requests initialization
 	public const short push1Pull2MsgType = 307; //intMsg, manual push/pull 1:push, 2:Pull, 3. togglePushPull, 0. return to automatic pushPull
-	//public const short keyMsgType = 308; // unused, could send client keypresses to server
+	public const short blessMsgType = 308; // intMsg, value = id of node to bless (old, unused keyMsgType)
 	public const short initRevisionMsgType = 309; //InitRevisionMsg, server sends to all clients infrequently, to update relatively static initMsg data.
 	public const short requestNodeIdMsgType = 310; //intMsg, client requests being associated with a given bubble. Server responds with nodeIDMsgType.
 	public const short gameSizeMsgType = 311; //GameSizeMsg with numNodes, numLinks, worldRadius
@@ -79,9 +78,9 @@ public static class CScommon {
 		public string value;
 	}
 	
-	public class KeyMsg: MessageBase {
-		public KeyCode keyCode;
-	}
+	//	public class KeyMsg: MessageBase {
+	//		public KeyCode keyCode;
+	//	}
 	
 	public class GameSizeMsg: MessageBase {
 		public int numNodes;
@@ -104,6 +103,18 @@ public static class CScommon {
 		public NodeName[] arry;
 	}
 	
+	public struct ScoreStruct{
+		public int nodeId;
+		public int plus;
+		public int minus;
+		public byte  neither0Winner1Loser2; //0 if is an initial score, like when you first join an ongoing game. Nobody got eaten.
+		public float performance; // recent rate at which this player has generated plus (and avoided minus).
+		public long gameMilliseconds;
+	}
+	
+	public class ScoreMsg: MessageBase{
+		public ScoreStruct[] arry;
+	}
 	
 	//	public class LinkTypeMsg : MessageBase {
 	//		public LinkType linkType;
@@ -152,6 +163,9 @@ public static class CScommon {
 		public int sourceId; // an index into nodes
 		public int targetId; // an index into nodes
 		public LinkType linkType;
+		public LinkData (bool enabled0,int sourceId0,int targetId0,LinkType linkType0){
+			enabled = enabled0; sourceId = sourceId0; targetId = targetId0; linkType = linkType0;
+		}
 	}
 	
 	public struct LinkInfo {
@@ -163,17 +177,6 @@ public static class CScommon {
 		public LinkInfo[] links;
 	}
 	
-	public struct ScoreStruct {
-		public int nodeId;
-		public int plus;
-		public int minus;
-	}
-	public class ScoreMsg: MessageBase{
-		//true if this message sends two ScoreStructs, arry[0] being the winner, arry[1] being the loser.
-		//false if this message is a list of initial scores (like when you first join an ongoing game).
-		public bool zeroAteOne; 
-		public ScoreStruct[] arry;
-	}
 
 
 	public static readonly float maxOomphFactor = 200;
@@ -225,11 +228,16 @@ public static class CScommon {
 
 	//dna
 
-	public const int vegetableBit = 0; // higher photosynthesis yield
-	public const int strengthBit = 1;  // higher link rate, with accompanying power demand and inefficiency
+	public const int vegetableBit = 0; // if false isEater, if true !isEater. We should rename this "predatorBit" and flip all our uses of it.
+	public const int noPhotoBit = 1;  // higher link rate, with accompanying power demand and inefficiency
 	public const int playerBit = 3;   //indicates that this node has been allocated to a player (even though the player may be offline).
 	public const int playerPlayingBit = 4;  //indicates that this node has been allocated to a player, and that this player is currently online and playing.
 	public const int snarkBit = 5;
+	public const int strengthBit = 6;
+	public const int rightTeamBit = 7; 
+	public const int leftTeamBit = 8; //teams 0,1,2 and 3
+
+
 	//thanks to http://www.dotnetperls.com/and
 	public static string longToString(long dna)
 	{	// Displays bits.
@@ -250,6 +258,16 @@ public static class CScommon {
 	
 	//bitNumber 0 is least significant bit
 	public static bool testBit(long dna, int bit)
-	{ return ((dna & (1L << bit)) != 0L);}
-
+	{
+		return ((dna & (1L << bit)) != 0L);
+	}
+	
+	//leftBit >= rightBit, returns the integer specified by the field of bits between (and including) them
+	//the returned value will be between 0 and 2^(leftBit-rightBit)-1;
+	public static long dnaNumber(long dna, int leftBit, int rightBit)
+	{	
+		return (dna >> rightBit) & ~(int.MaxValue << (1+leftBit-rightBit)); 
+	}
+	
+	public static float performanceHalfLifeMilliseconds = 5*60*1000; // number of milliseconds until performance reverts half way to zero
 }

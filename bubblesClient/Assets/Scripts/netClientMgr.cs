@@ -270,9 +270,11 @@ public class netClientMgr : MonoBehaviour {
 			GUI.Label (new Rect (2, 40, 320, 600),
 
 				   "\nH: start the game\n"+
-		           "Ctrl + + LeftClick: canceling node selection\n" +
-		           "Ctrl + + Shift + LeftClick: canceling node selection\n" +
+		           "Ctrl + LeftClick: selecting my node\n" +
+		           "Ctrl + Shift + LeftClick: canceling node selection\n" +
+
 		           "Tab: turn off/on chat windows\n" +
+		           "Shift + LeftClick: blessing that node \n(give half of my current oomph to that node)\n" +
 
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
@@ -295,10 +297,6 @@ public class netClientMgr : MonoBehaviour {
 		           "\nMOVESPEED\n"+
 		           "Mouse ScrollWheel: speed up/down\n"+
 				   "B: inchworm forward/reverse toggle\n" +
-
-				   "\nMOVESPEED\n"+
-				   "Comma: speed up\n"+
-				   "Period: speed down\n"+
 
 		           "\nF12: disconnect");
 
@@ -545,6 +543,7 @@ public class netClientMgr : MonoBehaviour {
 		public static CScommon.InitMsg initMsg;
 		public static CScommon.LinksMsg linkMsg;
 		public static Dictionary<int,CScommon.ScoreStruct> scoreMsgGOspinner; //int = nodeID
+		public static Dictionary<int,System.Diagnostics.Stopwatch> stopwatches = new Dictionary<int,System.Diagnostics.Stopwatch>();
 		public static Dictionary<int,Transform> playersNameTransforms;
 		public static Dictionary<int,string> dicPlayerNamesIntString = new Dictionary<int, string>();
 
@@ -656,7 +655,7 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.dicPlayerNamesIntString = new Dictionary<int, string>();
 			GOspinner.playersNameTransforms = new Dictionary<int, Transform>();
 			GOspinner.scoreMsgGOspinner = new Dictionary<int, CScommon.ScoreStruct>();
-
+			GOspinner.stopwatches = new Dictionary<int,System.Diagnostics.Stopwatch>();
 
 			GOspinner.resetGameStats();
 
@@ -764,30 +763,60 @@ public class netClientMgr : MonoBehaviour {
 
 				if(scoreMsgGOspinner.ContainsKey(nodeId)) 
 				{
-					if(nodeId == myNodeIndex && scoreMsg.arry[i].plus > scoreMsgGOspinner[nodeId].plus)
+					scoreMsgGOspinner.Remove(nodeId); 
+				}
+				if(nodeId == myNodeIndex)
+				{
+					if(scoreMsg.arry[i].neither0Winner1Loser2 == 1)
 					{
-//						clipEatingOthers.Play();
 						bubbles[nodeId].GetComponent<AudioSource>().clip = clipEatingOthers;
 						bubbles[nodeId].GetComponent<AudioSource>().Play();
 					}
-					if(nodeId == myNodeIndex && scoreMsg.arry[i].minus > scoreMsgGOspinner[nodeId].minus)
+					if(scoreMsg.arry[i].neither0Winner1Loser2 == 2)
 					{
-//						clipEatingOthers.Play();
 						bubbles[nodeId].GetComponent<AudioSource>().clip = clipGetEatenByOthers;
 						bubbles[nodeId].GetComponent<AudioSource>().Play();
 					}
-					scoreMsgGOspinner.Remove(nodeId); 
 				}
-//				if(!scoreMsg.zeroAteOne)continue;
+
 				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
+
+				if(!stopwatches.ContainsKey(nodeId))
+				{
+					System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+					stopwatches.Add(nodeId,stopwatch);
+				}
+				stopwatches[nodeId].Reset();
+				stopwatches[nodeId].Start ();
+//				if(!scoreMsg.zeroAteOne)continue;
 				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
 				//I'll get scoreMsg with zero for this node and I'll replace previous score with new one which is zero.
-				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString();
-				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString();
-				Debug.Log (GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsg.arry[i].plus.ToString()+" -" + scoreMsg.arry[i].minus.ToString());
+				displayNameChanger(nodeId);
 			}
+		}
+
+		public static void displayNamesManager()
+		{
+			foreach (int i in scoreMsgGOspinner.Keys)
+			{
+				displayNameChanger(i);
+			}
+		}
+		public static void displayNameChanger(int nodeId)
+		{
+			playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+				GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + 
+					scoreMsgGOspinner[nodeId].plus.ToString()+" -" + scoreMsgGOspinner[nodeId].minus.ToString()
+					+ "Performance: " + currentPerformance(nodeId).ToString();
+			playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+				GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsgGOspinner[nodeId].plus.ToString()+" -" + scoreMsgGOspinner[nodeId].minus.ToString()
+					+ "Performance: " + currentPerformance(nodeId).ToString();
+		}
+
+		public static float currentPerformance(int nodeId)
+		{
+			long delta = stopwatches[nodeId].ElapsedMilliseconds; //the amount of time, in milliseconds, since you last received a scoreMsg for this player
+			return scoreMsgGOspinner[nodeId].performance * Mathf.Pow(2,-delta/CScommon.performanceHalfLifeMilliseconds);
 		}
 
 		public static void generateLinks()
@@ -1037,6 +1066,7 @@ public class netClientMgr : MonoBehaviour {
 			cameraMover ();
 			positioning ();
 			updateLinksPosRotScale();
+			displayNamesManager();
 			if(!myChatInputField.isFocused)
 			{
 				if (Input.GetKeyDown(KeyCode.F7))
@@ -1092,6 +1122,7 @@ public class netClientMgr : MonoBehaviour {
 				MusSpeedController(-10);
 			}
 			requestLinktoTarget ();
+			requestToBlessThatNode();
 		}
 
 		public static int myInternalMusSpeed = 80;
@@ -1254,7 +1285,9 @@ public class netClientMgr : MonoBehaviour {
 				return;
 			}
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
-			if ((Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1)) && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
+			if ((Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1))
+			    && !(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+			    && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{	//On serverside if I send my own nodeId as the target I'll have no external link
 				nim.nodeIndex = GOspinner.closestBubbleIndexNumber ();
 				nim.linkType = CScommon.LinkType.puller;
@@ -1274,6 +1307,20 @@ public class netClientMgr : MonoBehaviour {
 //
 //			}
 //#endif
+		}
+
+		internal static void requestToBlessThatNode()
+		{
+			CScommon.intMsg nim = new CScommon.intMsg ();
+
+			if (Input.GetMouseButtonDown (0)
+			    && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+			    && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
+			{
+				nim.value = GOspinner.closestBubbleIndexNumber ();
+				myClient.Send (CScommon.blessMsgType, nim);
+			//	audioSourceBeepSelectNodeForLink.Play ();
+			}
 		}
 
 		//static void requestToRotateMe(vectore3 rightClickMousePosition)
