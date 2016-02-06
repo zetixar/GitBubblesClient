@@ -23,7 +23,7 @@ public class netClientMgr : MonoBehaviour {
 
 	public InputField serverIPInputField;
 //	public string serverIP = "192.168.0.2";
-	public string serverIP = "52.90.140.113";//"52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer
+	public string serverIP = "52.90.140.113";//"52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer //Mac: 169.254.191.54
 	public InputField playerNickNameInputField;
 	private string playerNickName;
 
@@ -34,6 +34,7 @@ public class netClientMgr : MonoBehaviour {
 
 	public Button serverIPConnectButton;
 	public Button serverIP192ConnectButton;
+	public Button serverIPLocalConnectButton;
 	public GameObject scrollViewForScaling;
 	public Text scrollViewTextDebuging;
 	public Text scrollViewDisplayAllChat;
@@ -215,6 +216,7 @@ public class netClientMgr : MonoBehaviour {
 		serverIPConnectButton.gameObject.SetActive(true);
 		playerNickNameInputField.gameObject.SetActive(true);
 		serverIP192ConnectButton.gameObject.SetActive(true);
+		serverIPLocalConnectButton.gameObject.SetActive(true);
 		initialized = false;
 		miniCamera.gameObject.SetActive(false);
 		gameSizeMsg.numNodes = 0;
@@ -234,7 +236,14 @@ public class netClientMgr : MonoBehaviour {
 	//called by btn in the scene
 	public void connectTo19216802Server()
 	{
-		serverIP = "192.168.0.2";
+		serverIP = "169.254.191.54"; // "192.168.0.2"
+		SetupClient();
+		audioSourceBeepSelectNodeForLink.Play ();
+	}
+	public void connectToLocalHost()
+	{
+		serverIP = "127.0.0.1";
+		SetupClient();
 		audioSourceBeepSelectNodeForLink.Play ();
 	}
 
@@ -368,6 +377,7 @@ public class netClientMgr : MonoBehaviour {
 		serverIPInputField.gameObject.SetActive(false);
 		serverIPConnectButton.gameObject.SetActive(false);
 		serverIP192ConnectButton.gameObject.SetActive(false);
+		serverIPLocalConnectButton.gameObject.SetActive(false);
 		playerNickNameInputField.gameObject.SetActive(false);
 		stateChoosingServer = false;
 		initialized = false;
@@ -417,9 +427,12 @@ public class netClientMgr : MonoBehaviour {
 		speedSlider.gameObject.SetActive(true);
 		speedSlider.value = GOspinner.myInternalMusSpeed;
 		spectating = false;
+		GOspinner.cameraFollowMynode = true;
 		if(myNodeIndex == -1)
 		{
 			speedSlider.gameObject.SetActive(false);
+			GOspinner.cameraFollowMynode = false;
+			spectating = true;
 		}
 		Debug.Log ("my nodeIndex is " + myNodeIndex);
 //		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
@@ -593,6 +606,7 @@ public class netClientMgr : MonoBehaviour {
 					playersNameTransforms.Remove(nodeId);
 				}
 				if(partofnames.arry[i].name == string.Empty)continue;
+
 				GOspinner.dicPlayerNamesIntString.Add(nodeId,partofnames.arry[i].name);
 				playersNameTransforms.Add
 					(nodeId,((Transform)Instantiate (pfPlayerName, bubbles[nodeId].position, Quaternion.identity)));
@@ -603,6 +617,7 @@ public class netClientMgr : MonoBehaviour {
 				playersNameTransforms[nodeId].name = "playerName" + nodeId +" " + GOspinner.dicPlayerNamesIntString[nodeId];
 				playersNameTransforms[nodeId].tag = "PlayerName";
 			}
+			changeHowToDisPlayPlayersName();
 		}
 
 		public static void cleanScene()
@@ -663,7 +678,7 @@ public class netClientMgr : MonoBehaviour {
 		
 		internal static void resetGameStats() {
 			myNodeIndex = -1;
-			mainCamera.orthographicSize = 1400.0f;
+			mainCamera.orthographicSize = 250.0f;
 			mainCamera.transform.position = new Vector3(0.0f,0.0f,-100.0f);
 			cameraZoomOutAtStart = 80;
 			generatingLink = true;
@@ -671,6 +686,8 @@ public class netClientMgr : MonoBehaviour {
 			cameraFollowMynode = false;
 			cameraFollowNodeIndex = 0;
 			followingCamera = false;
+			displayNames = 2;
+			changeHowToDisPlayPlayersName();
 		}
 
 		public static void nodePrefabCheck(int i, bool add)
@@ -805,18 +822,18 @@ public class netClientMgr : MonoBehaviour {
 		public static void displayNameChanger(int nodeId)
 		{
 			playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-				GOspinner.dicPlayerNamesIntString[nodeId] + ": +" + 
-					scoreMsgGOspinner[nodeId].plus.ToString()+" -" + scoreMsgGOspinner[nodeId].minus.ToString()
-					+ "Performance: " + currentPerformance(nodeId).ToString();
+				" " + GOspinner.dicPlayerNamesIntString[nodeId] +
+				"\n +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
+//					+ " P" + currentPerformance(nodeId).ToString();
 			playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-				GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsgGOspinner[nodeId].plus.ToString()+" -" + scoreMsgGOspinner[nodeId].minus.ToString()
-					+ "Performance: " + currentPerformance(nodeId).ToString();
+				" " + GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
+//					+ " P" + currentPerformance(nodeId).ToString();
 		}
 
 		public static float currentPerformance(int nodeId)
 		{
 			long delta = stopwatches[nodeId].ElapsedMilliseconds; //the amount of time, in milliseconds, since you last received a scoreMsg for this player
-			return scoreMsgGOspinner[nodeId].performance * Mathf.Pow(2,-delta/CScommon.performanceHalfLifeMilliseconds);
+			return Mathf.Round(scoreMsgGOspinner[nodeId].performance * Mathf.Pow(2,-delta/CScommon.performanceHalfLifeMilliseconds)* 100f) / 100f;
 		}
 
 		public static void generateLinks()
@@ -884,7 +901,7 @@ public class netClientMgr : MonoBehaviour {
 ///*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 1.2f,
 ///*vectore3.z*/		0.0f);
 			links[linkInfo.linkId].transform.localScale = new Vector3(
-					2.0f,
+					initMsg.nodeData[linkInfo.linkData.sourceId].radius,
 /*vectore3.y*/		(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude * 0.17f,// * 1.2f,
 //					(bubbles[linkInfo.linkData.sourceId].position - bubbles[linkInfo.linkData.targetId].position).magnitude,
 /*vectore3.z*/		0.0f);
@@ -968,14 +985,14 @@ public class netClientMgr : MonoBehaviour {
 								Color.white;
 							continue;
 						}
-						else if (CScommon.testBit (initMsg.nodeData[i].dna, CScommon.playerPlayingBit))
-						{
-							playersNameTransforms[i].FindChild("playerNameMiniMap").GetComponent<TextMesh>().color =
-								Color.grey;
-							playersNameTransforms[i].FindChild("playerNameMainCam").GetComponent<TextMesh>().color =
-								Color.grey;
-							continue;
-						}
+//						else if (CScommon.testBit (initMsg.nodeData[i].dna, CScommon.playerPlayingBit))
+//						{
+//							playersNameTransforms[i].FindChild("playerNameMiniMap").GetComponent<TextMesh>().color =
+//								Color.grey;
+//							playersNameTransforms[i].FindChild("playerNameMainCam").GetComponent<TextMesh>().color =
+//								Color.grey;
+//							continue;
+//						}
 						else if (updateMsg.nodeData[i].oomph > updateMsg.nodeData[myNodeIndex].oomph)
 						{
 							playersNameTransforms[i].FindChild("playerNameMiniMap").GetComponent<TextMesh>().color =
@@ -1050,15 +1067,16 @@ public class netClientMgr : MonoBehaviour {
 		static int cameraZoomOutAtStart = 80;
 		static int cameraFollowNodeIndex = 0;
 		static int steeringCounter = 5;
+		static int displayNameCounter = 10;
 
 		public static void Update()
 		{	
-			if (cameraZoomOutAtStart > 0)
-			{
-				mainCamera.orthographicSize -= 13.0f;
-				cameraZoomOutAtStart --;
-				return;
-			}
+//			if (cameraZoomOutAtStart > 0)
+//			{
+//				mainCamera.orthographicSize -= 13.0f;
+//				cameraZoomOutAtStart --;
+//				return;
+//			}
 			//Ctrl + Click = choose my node, Ctrl + Shift + Click = dismount and be spectator
 			if ((Input.GetKey (KeyCode.LeftControl)|| Input.GetKey (KeyCode.LeftControl)) && Input.GetMouseButtonDown (0)
 			    &&!myChatInputField.isFocused)
@@ -1066,7 +1084,14 @@ public class netClientMgr : MonoBehaviour {
 			cameraMover ();
 			positioning ();
 			updateLinksPosRotScale();
-			displayNamesManager();
+
+			if(displayNameCounter == 0)
+			{
+				displayNamesManager();
+				displayNameCounter = 10;
+			}
+			else displayNameCounter--;
+
 			if(!myChatInputField.isFocused)
 			{
 				if (Input.GetKeyDown(KeyCode.F7))
@@ -1140,7 +1165,7 @@ public class netClientMgr : MonoBehaviour {
 			Debug.Log ("My Internal Mus Speed: " + myInternalMusSpeed);
 		}
 	
-		static bool cameraFollowMynode = false;
+		public static bool cameraFollowMynode = false;
 		static float mainCamMoveSpeed = 3.0f;
 //** need to clamp the camera so it cannot go over up/down/right/left.
 		static void cameraMover()
@@ -1217,7 +1242,7 @@ public class netClientMgr : MonoBehaviour {
 		}
 		
 		static void zoomOut(float camorthsizeplus) {
-			if (mainCamera.orthographicSize < 700.0f)
+			if (mainCamera.orthographicSize < 1100.0f)
 			{	
 				if(mainCamera.orthographicSize < 100)
 				{
@@ -1225,7 +1250,7 @@ public class netClientMgr : MonoBehaviour {
 				}
 			else
 				mainCamera.orthographicSize += camorthsizeplus;
-				if (mainCamera.orthographicSize > 700.0f) mainCamera.orthographicSize = 700.0f;
+				if (mainCamera.orthographicSize > 1100.0f) mainCamera.orthographicSize = 1100.0f;
 			}
 		}
 
