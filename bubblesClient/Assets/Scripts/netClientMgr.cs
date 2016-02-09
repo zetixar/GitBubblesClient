@@ -2,14 +2,15 @@
 
 // derived from http://docs.unity3d.com/Manual/UNetClientServer.html
 // and http://forum.unity3d.com/threads/master-server-sample-project.331979/
-
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Types;
 using UnityEngine.Networking.Match;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
+
 
 public class netClientMgr : MonoBehaviour {
 
@@ -283,7 +284,6 @@ public class netClientMgr : MonoBehaviour {
 		           "Ctrl + Shift + LeftClick: canceling node selection\n" +
 
 		           "Tab: turn off/on chat windows\n" +
-		           "Shift + LeftClick: blessing that node \n(give half of my current oomph to that node)\n" +
 
 				   "\nCAMERA\n"+
 				   "WASD: for Moving Camera\n" +
@@ -306,6 +306,8 @@ public class netClientMgr : MonoBehaviour {
 		           "\nMOVESPEED\n"+
 		           "Mouse ScrollWheel: speed up/down\n"+
 				   "B: inchworm forward/reverse toggle\n" +
+
+					"\nShift + LeftClick: blessing that node \n(give half of my current oomph to that node)\n" +
 
 		           "\nF12: disconnect");
 
@@ -1079,7 +1081,8 @@ public class netClientMgr : MonoBehaviour {
 //			}
 			//Ctrl + Click = choose my node, Ctrl + Shift + Click = dismount and be spectator
 			if ((Input.GetKey (KeyCode.LeftControl)|| Input.GetKey (KeyCode.LeftControl)) && Input.GetMouseButtonDown (0)
-			    &&!myChatInputField.isFocused)
+				&& !EventSystem.current.IsPointerOverGameObject())
+//			    &&!myChatInputField.isFocused)
 				ChoosingMyNode ();
 			cameraMover ();
 			positioning ();
@@ -1155,7 +1158,16 @@ public class netClientMgr : MonoBehaviour {
 		public static void MusSpeedController(int increaseOrDecreaseSpeed)
 		{
 			CScommon.intMsg myDesiredSpeed= new CScommon.intMsg();
-			myInternalMusSpeed += increaseOrDecreaseSpeed;
+
+			myInternalMusSpeed = (int)speedSlider.value;//+= increaseOrDecreaseSpeed;
+			if(increaseOrDecreaseSpeed != 0)
+			{
+				myInternalMusSpeed += increaseOrDecreaseSpeed;
+			}
+			else
+			{
+				myInternalMusSpeed = (int)speedSlider.value;//+= increaseOrDecreaseSpeed;
+			}
 			if (-300 > myInternalMusSpeed)	myInternalMusSpeed = -300;
 			if (myInternalMusSpeed > 300) myInternalMusSpeed = 300;
 
@@ -1312,7 +1324,10 @@ public class netClientMgr : MonoBehaviour {
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
 			if ((Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1))
 			    && !(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-			    && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
+				&& !EventSystem.current.IsPointerOverGameObject())
+//			    && !myChatInputField.isFocused)
+
+				// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{	//On serverside if I send my own nodeId as the target I'll have no external link
 				nim.nodeIndex = GOspinner.closestBubbleIndexNumber ();
 				nim.linkType = CScommon.LinkType.puller;
