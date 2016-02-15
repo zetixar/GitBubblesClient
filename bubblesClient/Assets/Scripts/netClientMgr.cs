@@ -1,3 +1,4 @@
+// Copyright 2016 John fairfield && Mohsen Danesh Pajouh
 //version 001
 
 // derived from http://docs.unity3d.com/Manual/UNetClientServer.html
@@ -13,7 +14,7 @@ using UnityEngine.EventSystems;
 
 
 public class netClientMgr : MonoBehaviour {
-
+	#region fields
 	public static float nodeSclaeFactor = 1.8f;
 	public static int myNodeIndex;
 	public static bool stateChoosingServer = true;
@@ -54,15 +55,8 @@ public class netClientMgr : MonoBehaviour {
 	public Button keyGuide;
 	public Image keyGuideImage;
 
-
-
-
-
-
-
 	static NetworkClient myClient;
 	static CScommon.GameSizeMsg gameSizeMsg = new CScommon.GameSizeMsg(); //*** I'm not sure whether I need to initilize that or not
-
 
 	static float camSpeed = 270.0f;
 	static Camera mainCamera;
@@ -81,8 +75,8 @@ public class netClientMgr : MonoBehaviour {
 	static AudioClip clipGetEatenByOthers;
 	static AudioClip clipGameSize;
 
-
 	public Camera miniCamera;
+	#endregion
 
 	void Start()
 	{
@@ -94,7 +88,6 @@ public class netClientMgr : MonoBehaviour {
 		myChatInputField.gameObject.SetActive(false);
 		speedSlider.gameObject.SetActive(false);
 
-
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
 		mainCamAudioSource = mainCamera.GetComponent<AudioSource>();
@@ -102,14 +95,11 @@ public class netClientMgr : MonoBehaviour {
 		clipGetEatenByOthers = clipGetEatenByOthersPV;
 		clipGameSize = clipGameSizePV;
 
-
 		speedValueText.text = speedSlider.value.ToString();
 		minimapImage.gameObject.SetActive(false);
 		keyGuide.gameObject.SetActive(false);
 		keyGuideImage.gameObject.SetActive(false);
 		keyGuideImageDisplaybool = false;
-
-		
 
 		//setting up the prefabs
 		GOspinner.gospinnerStart();
@@ -208,7 +198,6 @@ public class netClientMgr : MonoBehaviour {
 		}
 	}
 
-
 	public void backToChooseServerPhase()
 	{
 		stateChoosingServer = true;
@@ -229,9 +218,6 @@ public class netClientMgr : MonoBehaviour {
 		minimapImage.gameObject.SetActive(false);
 		keyGuide.gameObject.SetActive(false);
 		keyGuideImage.gameObject.SetActive(false);
-
-		
-		
 	}
 
 	//called by btn in the scene
@@ -339,8 +325,7 @@ public class netClientMgr : MonoBehaviour {
 
 		           "Quote:\n"+
 		           "move down/up by 1/10 between 0 and 1 the fraction of their maxOomph fed to nonveg nodes before launch\n\n"+
- 
-		           "");
+ 		           "");
 		}
 	} 
 
@@ -371,6 +356,7 @@ public class netClientMgr : MonoBehaviour {
 		audioSourceBeepSelectNodeForLink.Play ();
 	}
 
+	#region Message Handlers
 	public void OnConnectedC(NetworkMessage netMsg)
 	{
 		Debug.Log("Connected as client to server");
@@ -414,6 +400,8 @@ public class netClientMgr : MonoBehaviour {
 
 		mainCamAudioSource.clip = clipGameSize;
 		mainCamAudioSource.Play();
+
+		Debug.Log(gameSizeMsg.worldRadius);
 	}
 
 	public void onInitMsg(NetworkMessage netMsg)
@@ -496,10 +484,9 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.scoreManager(scoreMsg);
 	}
 
+	#endregion
 
-
-
-
+	#region Scene Functions
 	public void sendMyChat()
 	{	
 		if(myChatString == string.Empty) return;
@@ -534,9 +521,7 @@ public class netClientMgr : MonoBehaviour {
 		keyGuideImageDisplaybool = !keyGuideImageDisplaybool;
 		keyGuideImage.gameObject.SetActive(keyGuideImageDisplaybool);
 	}
-
-
-
+	#endregion
 
 
 //GOSPINNER *************************************** GOSPINNER\\ 
@@ -544,7 +529,7 @@ public class netClientMgr : MonoBehaviour {
 
 		public static float linkscalefactor = 20.0f;
 
-		public static Transform pfGoal, pfVegBubble, pfAnimBubble, pfReservdPlayerBubble, pfMyPlayer,
+		public static Transform pfOurGoal, pfOTeamGoal, pfNonEaterBubble, pfEaterBubble, pfReservdPlayerBubble, pfMyPlayer, pfMyTeamPlayer,
 		pfOTeamPlayer, pfSnark, pfOomph, pfExPullLink, pfExPushLink, pfBoneLink, pfPlayerName;
 
 		public static Transform[] bubbles;
@@ -568,14 +553,16 @@ public class netClientMgr : MonoBehaviour {
 			pfExPullLink = GameObject.Find("pfExPullLink").transform;
 			pfExPushLink = GameObject.Find ("pfExPushLink").transform;
 			pfBoneLink = GameObject.Find ("pfBoneLink").transform;
-			pfVegBubble = GameObject.Find ("pfVegBubble").transform;
-			pfAnimBubble = GameObject.Find ("pfAnimBubble").transform;
+			pfNonEaterBubble = GameObject.Find ("pfNonEaterBubble").transform;
+			pfEaterBubble = GameObject.Find ("pfEaterBubble").transform;
 			pfSnark = GameObject.Find ("pfSnark").transform;
 			pfMyPlayer = GameObject.Find ("pfMyPlayer").transform;
+			pfMyTeamPlayer = GameObject.Find ("pfMyTeamPlayer").transform;
 			pfOTeamPlayer = GameObject.Find ("pfOTeamPlayer").transform;
 			pfOomph = GameObject.Find ("pfOomph").transform;
 			pfReservdPlayerBubble = GameObject.Find ("pfReservdPlayerBubble").transform;
-			pfGoal = GameObject.Find ("pfGoal").transform;
+			pfOurGoal = GameObject.Find ("pfOurGoal").transform;
+			pfOTeamGoal = GameObject.Find ("pfOTeamGoal").transform;
 			pfPlayerName = GameObject.Find("pfPlayerName").transform;
 		}
 
@@ -695,14 +682,14 @@ public class netClientMgr : MonoBehaviour {
 		public static void nodePrefabCheck(int i, bool add)
 		{
 			CScommon.StaticNodeData nd = initMsg.nodeData[i];
-//			string goalTag = "GoalClone";
-//			string goalName = "Goal";
+			string goalTag = "GoalClone";
+			string goalName = "Goal";
 			string playerTag = "Player";
 			string playerName = "MyPlayer";
 			string bblCloneTag = "bblClone";
 			string bblCloneName = "bbl";
 //			if (i == 0) {
-//				managePrefabTagNameBoolAddtrueRepfalse (i, pfGoal, goalTag, goalName, add);
+//				managePrefabTagNameBoolAddtrueRepfalse (i, pfOurGoal, goalTag, goalName, add);
 //				return;
 //			}
 			if (i == myNodeIndex) {
@@ -711,19 +698,42 @@ public class netClientMgr : MonoBehaviour {
 			} else if (CScommon.testBit (nd.dna, CScommon.snarkBit)){	
 				managePrefabTagNameBoolAddtrueRepfalse (i, pfSnark, bblCloneTag, bblCloneName, add);
 				return;
-			}else if (CScommon.testBit (nd.dna, CScommon.playerBit) && !CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) {
-				managePrefabTagNameBoolAddtrueRepfalse (i, pfReservdPlayerBubble, bblCloneTag, bblCloneName, add);
-				return;
-			} else if (CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) {
+			} else if (CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) 
+			{
+				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
+				{
+					managePrefabTagNameBoolAddtrueRepfalse (i, pfMyTeamPlayer, bblCloneTag, bblCloneName, add);
+					return;
+				}
+				else
 				managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamPlayer, bblCloneTag, bblCloneName, add);
 				return;
-			} else if (CScommon.testBit (nd.dna, CScommon.vegetableBit)) {
-				managePrefabTagNameBoolAddtrueRepfalse (i, pfVegBubble, bblCloneTag, bblCloneName, add);
+			}else if (CScommon.testBit (nd.dna, CScommon.playerBit)) { // && !CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) {
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfReservdPlayerBubble, bblCloneTag, bblCloneName, add);
 				return;
-			} else if (!CScommon.testBit (nd.dna, CScommon.vegetableBit)){	
-				managePrefabTagNameBoolAddtrueRepfalse (i, pfAnimBubble, bblCloneTag, bblCloneName, add);
+
+			} else if (CScommon.testBit (nd.dna, CScommon.goalBit)) 
+			{
+				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
+				{
+					managePrefabTagNameBoolAddtrueRepfalse (i, pfOurGoal, goalTag, goalName, add);
+					return;
+				}
+				else
+					managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamGoal, bblCloneTag, bblCloneName, add);
+				return;
+			} else if (CScommon.testBit (nd.dna, CScommon.eaterBit)) {
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfEaterBubble, bblCloneTag, bblCloneName, add);
+				return;
+
+			} else if (!CScommon.testBit (nd.dna, CScommon.eaterBit)){	
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfNonEaterBubble, bblCloneTag, bblCloneName, add);
 				return;
 			}
+		}
+		private static long teamNumCheck(long dna)
+		{
+			return CScommon.dnaNumber(dna, CScommon.leftTeamBit,CScommon.rightTeamBit);
 		}
 
 		private static void managePrefabTagNameBoolAddtrueRepfalse( int i, Transform prefab, string tag, string name, bool addorreplace)

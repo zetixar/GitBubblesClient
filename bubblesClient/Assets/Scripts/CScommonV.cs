@@ -5,7 +5,7 @@ using UnityEngine.Networking;
 using System.Collections;
 
 // must be maintained in common between client and server
-public static class CScommon {
+public static class CScommonV {
 
 	public static int serverPort = 8888;
 
@@ -45,30 +45,30 @@ public static class CScommon {
 
 	//use value of zero to toggle server "pause" state without changing game.
 
-	//  Summary of messagery:
+//  Summary of messagery:
+	
+//  Client starts with a nodeID of -1.
+//  Client sends myNetworkClient.Connect(serverIP, CScommon.serverPort)
+//  Server handles MsgType.Connect, replies with gameSizeMsg with numNodes, numLinks and worldRadius
+//	Client responds with initRequestMsg including a name
+//	Server replies with a suite of reliable initMsgs and updateMsgs and linkMsgs that cover the whole world.
 
-	//  Client starts with a nodeID of -1.
-	//  Client sends myNetworkClient.Connect(serverIP, CScommon.serverPort)
-	//  Server handles MsgType.Connect, replies with gameSizeMsg with numNodes, numLinks and worldRadius
-	//	Client responds with initRequestMsg including a name
-	//	Server replies with a suite of reliable initMsgs and updateMsgs and linkMsgs that cover the whole world.
+//	One half second later (so that hopefully client will already have world messages before getting a node reference), 
+//  server will send a nodeIdMsg which contains their nodeId, which may be -1 if none are available.
+//  If not -1, server also sends nameNodeIdmsg to all clients associating the name to the node,
+//  and server will issue an initRevisionMsg of the changed DNA (reflecting that the node is mounted) to all clients.
 
-	//	One half second later (so that hopefully client will already have world messages before getting a node reference), 
-	//  server will send a nodeIdMsg which contains their nodeId, which may be -1 if none are available.
-	//  If not -1, server also sends nameNodeIdmsg to all clients associating the name to the node,
-	//  and server will issue an initRevisionMsg of the changed DNA (reflecting that the node is mounted) to all clients.
+//  If user clicks on a desired node to mount, client sends a requestNodeId for that node.
+//	The server replies with a nodeIdMsg which either contains their old, unchanged bubble assignment
+//  (which may have been -1) which indicates their request is denied for some reason, OR it contains an assigned nodeId 
+//	(which may be different from the one requested).
+//  Server also sends nameNodeIdmsg to all clients associating the name to the node.
+//  If request granted, server will issue an initRevisionMsg of the changed DNA (reflecting that the node is mounted) to all connected clients.
 
-	//  If user clicks on a desired node to mount, client sends a requestNodeId for that node.
-	//	The server replies with a nodeIdMsg which either contains their old, unchanged bubble assignment
-	//  (which may have been -1) which indicates their request is denied for some reason, OR it contains an assigned nodeId 
-	//	(which may be different from the one requested).
-	//  Server also sends nameNodeIdmsg to all clients associating the name to the node.
-	//  If request granted, server will issue an initRevisionMsg of the changed DNA (reflecting that the node is mounted) to all connected clients.
+//  When game is unpaused, server sends regular unreliable updateMsgs,
+//  and irregularly sends reliable initRevisionMsgs and linkMsgs.
 
-	//  When game is unpaused, server sends regular unreliable updateMsgs,
-	//  and irregularly sends reliable initRevisionMsgs and linkMsgs.
-
-	//  If server starts a new game, it issues a new gameSizeMsg to all connected clients.
+//  If server starts a new game, it issues a new gameSizeMsg to all connected clients.
 
 	//make sure bone is not first one, it must not be default value since bones can't be changed to another type.
 	public enum LinkType : byte {pusher, puller, bone} 
@@ -85,9 +85,9 @@ public static class CScommon {
 		public string value;
 	}
 
-	//	public class KeyMsg: MessageBase {
-	//		public KeyCode keyCode;
-	//	}
+//	public class KeyMsg: MessageBase {
+//		public KeyCode keyCode;
+//	}
 
 	public class GameSizeMsg: MessageBase {
 		public int numNodes;
@@ -123,17 +123,17 @@ public static class CScommon {
 		public ScoreStruct[] arry;
 	}
 
-	//	public class LinkTypeMsg : MessageBase {
-	//		public LinkType linkType;
-	//	}
-
+//	public class LinkTypeMsg : MessageBase {
+//		public LinkType linkType;
+//	}
+	
 
 	public class TargetNodeMsg : MessageBase{
 		public int nodeIndex;
 		public LinkType linkType;
 		public byte hand;
 	}
-
+	
 	public struct StaticNodeData {
 		public float radius;
 		public long dna;
@@ -143,7 +143,7 @@ public static class CScommon {
 		public Vector2 position;
 		public float oomph;
 	}
-
+	
 	//for (i = start; i<start+nodeData.Count; i++) of an array of nodes.
 	public class InitMsg: MessageBase{
 		public int start;
@@ -160,7 +160,7 @@ public static class CScommon {
 		public int nodeIndex;
 		public StaticNodeData staticNodeData;
 	}
-
+	
 	public class InitRevisionMsg: MessageBase{
 		public StaticNodeInfo[] nodeInfo;
 	}
@@ -184,16 +184,17 @@ public static class CScommon {
 		public LinkInfo[] links;
 	}
 
+
 	public static readonly float maxOomphFactor = 200;
 	public static readonly float inefficientLink = 60; // distance/radius at which link efficiency first term drops to 1/e ~ 0.36788
 	public static readonly float inefficientLink2 = inefficientLink*inefficientLink;
-	public static readonly float baseMetabolicRate = 0.0035f;
 
-	public static float maxOomph(float radius, long dna){ return maxOomphFactor*radius*radius*(testBit(dna,eaterBit)?0.2f:1.0f);}
+	public static float maxOomph(float radius){ return maxOomphFactor*radius*radius;}
 
 	private static float distance2(Vector2 source, Vector2 target){
 		return (target.x-source.x)*(target.x-source.x) + (target.y-source.y)*(target.y-source.y);
 	}
+
 	// Returns a number between 0 and 1, the efficiency of a relationship between two nodes.
 	// Efficiency is a function of the distance between the two nodes AND the source's radius--so efficiency is NOT symmetric.
 	public static float efficiency(float distanceSquared, float sourceRadiusSquared){
@@ -206,41 +207,19 @@ public static class CScommon {
 		//So they're "proportionately" (to their radius) slower but more efficient,
 		//though absolutely the same speed but more efficient.
 	}
-	
 
-	private static float metabolicRate(float oomph, float maxOomph){
-		return Mathf.Pow(oomph/maxOomph, 0.25f) * baseMetabolicRate;
-	}
-	private static float metabolicOutput(float oomph, float maxOomph, long dna){
-			return oomph*(testBit(dna, CScommon.strengthBit)?10.0f*metabolicRate(oomph,maxOomph): metabolicRate(oomph,maxOomph)); // units: o
-	}
-
-	//metabolicOutput is the oomph consumed by an enabled muscle.
-	//rawStrength is the oomph actually delivered into movement by the enabled muscle, as degraded by the efficiency of the muscle.
+	//demand is the oomph consumed by a muscle every fixedframe.
+	//(with one exception: if the muscle isPuller(), and the pulled node's center is already within the source's radius, it draws no power and does nothing)
+	//link strength = demand * efficiency(linkLengthSquared,sourceRadiusSquared) is the oomph actually delivered into movement by the enabled muscle, as degraded by the efficiency of the muscle.
 	//The units of both are units of oomph.
+	//i.e., disabled muscles (demand == 0) don't do anything and don't draw any oomph.
+	//Note that a node running n equally enabled muscles is consuming its oomph n times faster than a node running just 1 such muscle, 
 
-	//muscle link strength = enabled?rawstrength(oomph, etc etc):0f; i.e., disenabled muscles don't do anything and don't draw any oomph.
-	// *** bone link strength is a constant, whatever displays well. Bones are never disabled, and do not change with distance or oomph ***
-	
-	//Note that a node running n enabled muscles is consuming its oomph n times faster than a node running just 1 muscle, 
-	//i.e. metabolicOutput is per enabled muscle, not per 'digestive system' of the organism as a whole.
+	//If we don't send the client the full info on "demand", but rather only the boolean "enabled" which is demand>0, the compromised display
+	//could be to render links with width proportional to 
+	//		strength = enabled? someFactor * sourceRadiusSquared * efficiency(linkLengthSquared,sourceRadiusSquared) : 0;
 
-	//the first four parameters of rawStrength are properties of the link source, not the link target.
-	public static float rawStrength(float oomph, float maxOomph, long dna, float radiusSquared , float linkLengthSquared){
-		return metabolicOutput(oomph, maxOomph, dna)*efficiency(linkLengthSquared,radiusSquared);
-	}
-
-
-	//dna
-
-//	public const int vegetableBit = 0; // if false isEater, if true !isEater. We should rename this "predatorBit" and flip all our uses of it.
-//	public const int noPhotoBit = 1;  // higher link rate, with accompanying power demand and inefficiency
-//	public const int playerBit = 3;   //indicates that this node has been allocated to a player (even though the player may be offline).
-//	public const int playerPlayingBit = 4;  //indicates that this node has been allocated to a player, and that this player is currently online and playing.
-//	public const int snarkBit = 5;
-//	public const int strengthBit = 6;
-//	public const int rightTeamBit = 7; 
-//	public const int leftTeamBit = 8; //teams 0,1,2 and 3
+	//Bone link strength is a constant, whatever displays well. Bones are never disabled, and do not change with distance or oomph 
 
 
 	//dna bits from rightmost (0) to leftmost (63)
@@ -256,11 +235,6 @@ public static class CScommon {
 	//skipping 9
 	public const int goalBit = 10;
 	public const int jeepBit = 11;
-
-	//organism dna?
-	//goal for each team
-	//
-
 
 	//thanks to http://www.dotnetperls.com/and
 	public static string longToString(long dna)
@@ -282,16 +256,13 @@ public static class CScommon {
 	
 	//bitNumber 0 is least significant bit
 	public static bool testBit(long dna, int bit)
-	{
-		return ((dna & (1L << bit)) != 0L);
-	}
-	
+	{ return ((dna & (1L << bit)) != 0L);}
+
 	//leftBit >= rightBit, returns the integer specified by the field of bits between (and including) them
 	//the returned value will be between 0 and 2^(leftBit-rightBit)-1;
 	public static long dnaNumber(long dna, int leftBit, int rightBit)
-	{	
-		return (dna >> rightBit) & ~(int.MaxValue << (1+leftBit-rightBit)); 
-	}
+	{	return (dna >> rightBit) & ~(int.MaxValue << (1+leftBit-rightBit)); }
 
 	public static float performanceHalfLifeMilliseconds = 5*60*1000; // number of milliseconds until performance reverts half way to zero
+		
 }
