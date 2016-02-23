@@ -51,6 +51,8 @@ public class netClientMgr : MonoBehaviour {
 	public static Slider speedSlider;
 	public Text speedValueText;
 
+	public static Button camLockBtn;
+
 	public Image minimapImage;
 	public Button keyGuide;
 	public Image keyGuideImage;
@@ -85,8 +87,11 @@ public class netClientMgr : MonoBehaviour {
 		serverIPInputField.text = serverIPInputField.placeholder.GetComponent<Text>().text;
 		myChatInputField = GameObject.Find("ChatInput").GetComponent<InputField>();
 		speedSlider = GameObject.Find("SpeedSlider").GetComponent<Slider>();
+		camLockBtn = GameObject.Find("camLockBtn").GetComponent<Button>();
+
 		myChatInputField.gameObject.SetActive(false);
 		speedSlider.gameObject.SetActive(false);
+		camLockBtn.gameObject.SetActive(false);
 
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
@@ -215,6 +220,7 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.cleanScene ();
 		GOspinner.settingUpTheScene();
 		speedSlider.gameObject.SetActive(false);
+		camLockBtn.gameObject.SetActive(false);
 		minimapImage.gameObject.SetActive(false);
 		keyGuide.gameObject.SetActive(false);
 		keyGuideImage.gameObject.SetActive(false);
@@ -255,7 +261,7 @@ public class netClientMgr : MonoBehaviour {
 		return newAudio; 
 	}
 
-	//Key Guide
+	#region Key Guide
 	void OnGUI()
 	{
 	if (myClient != null && myClient.isConnected) 
@@ -284,6 +290,18 @@ public class netClientMgr : MonoBehaviour {
 				   "Right Click: right hand external link\n"+
 		           "Space + Either Clicks: pusher external link\n" +
 				   "N: no external link\n" +
+
+					//draging. droping. 
+					//zooming /right link/ pushpull link/ camera following me or not/ spectating?/ blessing/ moving camera/ changing my node
+					//speed
+					//left handed vs right hand
+					//displaying the status of 
+					//two finger click is right click
+
+					//AA push/right ha
+				
+
+
 
 		           "\nTRICYCLE STEERING\n"+
 				   "Z: steering the tricycle to left\n" +
@@ -328,7 +346,9 @@ public class netClientMgr : MonoBehaviour {
  		           "");
 		}
 	} 
+	#endregion
 
+	#region SetupClient
 	//Called by btn in the scene and create a client and connect to the server port
 	public void SetupClient()
 	{	
@@ -355,6 +375,7 @@ public class netClientMgr : MonoBehaviour {
 		myClient.Connect(serverIP, CScommon.serverPort);
 		audioSourceBeepSelectNodeForLink.Play ();
 	}
+	#endregion
 
 	#region Message Handlers
 	public void OnConnectedC(NetworkMessage netMsg)
@@ -415,12 +436,15 @@ public class netClientMgr : MonoBehaviour {
 		CScommon.intMsg nodeIndexMsg = netMsg.ReadMessage<CScommon.intMsg>();
 		myNodeIndex = nodeIndexMsg.value;
 		speedSlider.gameObject.SetActive(true);
+		camLockBtn.gameObject.SetActive(true);
 		speedSlider.value = GOspinner.myInternalMusSpeed;
 		spectating = false;
 		GOspinner.cameraFollowMynode = true;
 		if(myNodeIndex == -1)
 		{
 			speedSlider.gameObject.SetActive(false);
+			camLockBtn.gameObject.SetActive(false);
+
 			GOspinner.cameraFollowMynode = false;
 			spectating = true;
 		}
@@ -525,8 +549,9 @@ public class netClientMgr : MonoBehaviour {
 
 
 //GOSPINNER *************************************** GOSPINNER\\ 
-	private static class GOspinner {
+	public static class GOspinner {
 
+		#region Fields
 		public static float linkscalefactor = 20.0f;
 
 		public static Transform pfOurGoal, pfOTeamGoal, pfNonEaterBubble, pfEaterBubble, pfReservdPlayerBubble, pfMyPlayer, pfMyTeamPlayer,
@@ -546,8 +571,9 @@ public class netClientMgr : MonoBehaviour {
 		public static Dictionary<int,System.Diagnostics.Stopwatch> stopwatches = new Dictionary<int,System.Diagnostics.Stopwatch>();
 		public static Dictionary<int,Transform> playersNameTransforms;
 		public static Dictionary<int,string> dicPlayerNamesIntString = new Dictionary<int, string>();
+		#endregion
 
-
+		#region setting up the scene
 		public static void gospinnerStart()
 		{
 			pfExPullLink = GameObject.Find("pfExPullLink").transform;
@@ -581,33 +607,7 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
-		internal static void playerNamesManage (CScommon.NodeNamesMsg partofnames)
-		{
-			for (int i = 0; i < partofnames.arry.Length; i++)
-			{
-				int nodeId = partofnames.arry[i].nodeId;
 
-				if(GOspinner.dicPlayerNamesIntString.ContainsKey(nodeId))
-					GOspinner.dicPlayerNamesIntString.Remove(nodeId);
-				if(GOspinner.playersNameTransforms.ContainsKey(nodeId))
-				{
-					Destroy(playersNameTransforms[nodeId].gameObject);
-					playersNameTransforms.Remove(nodeId);
-				}
-				if(partofnames.arry[i].name == string.Empty)continue;
-
-				GOspinner.dicPlayerNamesIntString.Add(nodeId,partofnames.arry[i].name);
-				playersNameTransforms.Add
-					(nodeId,((Transform)Instantiate (pfPlayerName, bubbles[nodeId].position, Quaternion.identity)));
-				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId];
-				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-					GOspinner.dicPlayerNamesIntString[nodeId];
-				playersNameTransforms[nodeId].name = "playerName" + nodeId +" " + GOspinner.dicPlayerNamesIntString[nodeId];
-				playersNameTransforms[nodeId].tag = "PlayerName";
-			}
-			changeHowToDisPlayPlayersName();
-		}
 
 		public static void cleanScene()
 		{	
@@ -678,7 +678,9 @@ public class netClientMgr : MonoBehaviour {
 			displayNames = 2;
 			changeHowToDisPlayPlayersName();
 		}
+		#endregion
 
+		#region prefab manager
 		public static void nodePrefabCheck(int i, bool add)
 		{
 			CScommon.StaticNodeData nd = initMsg.nodeData[i];
@@ -750,6 +752,9 @@ public class netClientMgr : MonoBehaviour {
 			bubbles[i].name = name + i;
 		}
 
+		#endregion
+
+		#region initRev & updateMsg manager
 		public static void initRevisionMsgg(CScommon.InitRevisionMsg initrevmassege)
 		{
 			for (int i = 0; i < initrevmassege.nodeInfo.Length; i++) 
@@ -783,71 +788,9 @@ public class netClientMgr : MonoBehaviour {
 				}
 		}
 
-		public static void scoreManager(CScommon.ScoreMsg scoreMsg)
-		{
+		#endregion
 
-			for(int i=0; i < scoreMsg.arry.Length; i++)
-			{
-				int nodeId = scoreMsg.arry[i].nodeId;
-
-				if(scoreMsgGOspinner.ContainsKey(nodeId)) 
-				{
-					scoreMsgGOspinner.Remove(nodeId); 
-				}
-				if(nodeId == myNodeIndex)
-				{
-					if(scoreMsg.arry[i].neither0Winner1Loser2 == 1)
-					{
-						bubbles[nodeId].GetComponent<AudioSource>().clip = clipEatingOthers;
-						bubbles[nodeId].GetComponent<AudioSource>().Play();
-					}
-					if(scoreMsg.arry[i].neither0Winner1Loser2 == 2)
-					{
-						bubbles[nodeId].GetComponent<AudioSource>().clip = clipGetEatenByOthers;
-						bubbles[nodeId].GetComponent<AudioSource>().Play();
-					}
-				}
-
-				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
-
-				if(!stopwatches.ContainsKey(nodeId))
-				{
-					System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-					stopwatches.Add(nodeId,stopwatch);
-				}
-				stopwatches[nodeId].Reset();
-				stopwatches[nodeId].Start ();
-//				if(!scoreMsg.zeroAteOne)continue;
-				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
-				//I'll get scoreMsg with zero for this node and I'll replace previous score with new one which is zero.
-				displayNameChanger(nodeId);
-			}
-		}
-
-		public static void displayNamesManager()
-		{
-			foreach (int i in scoreMsgGOspinner.Keys)
-			{
-				displayNameChanger(i);
-			}
-		}
-		public static void displayNameChanger(int nodeId)
-		{
-			playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
-				" " + GOspinner.dicPlayerNamesIntString[nodeId] +
-				"\n +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
-//					+ " P" + currentPerformance(nodeId).ToString();
-			playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
-				" " + GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
-//					+ " P" + currentPerformance(nodeId).ToString();
-		}
-
-		public static float currentPerformance(int nodeId)
-		{
-			long delta = stopwatches[nodeId].ElapsedMilliseconds; //the amount of time, in milliseconds, since you last received a scoreMsg for this player
-			return Mathf.Round(scoreMsgGOspinner[nodeId].performance * Mathf.Pow(2,-delta/CScommon.performanceHalfLifeMilliseconds)* 100f) / 100f;
-		}
-
+		#region LINKS
 		public static void generateLinks()
 		{
 			//linkMsg.links.Length >> I got this data during gameSizeMsg()
@@ -928,8 +871,9 @@ public class netClientMgr : MonoBehaviour {
 			return (target.x-source.x)*(target.x-source.x) + (target.y-source.y)*(target.y-source.y);
 		}
 
-//tail		private static Vector3 prvsPosition = new Vector3(0,0,0);
+		#endregion
 
+		#region positioning
 		private static void positioning ()
 		{
 //			CScommon.DynamicNodeData me = updateMsg.nodeData[myNodeIndex];
@@ -1045,6 +989,101 @@ public class netClientMgr : MonoBehaviour {
 			return angle;
 		}
 
+		#endregion
+
+		#region displayNames
+		internal static void playerNamesManage (CScommon.NodeNamesMsg partofnames)
+		{
+			for (int i = 0; i < partofnames.arry.Length; i++)
+			{
+				int nodeId = partofnames.arry[i].nodeId;
+
+				if(GOspinner.dicPlayerNamesIntString.ContainsKey(nodeId))
+					GOspinner.dicPlayerNamesIntString.Remove(nodeId);
+				if(GOspinner.playersNameTransforms.ContainsKey(nodeId))
+				{
+					Destroy(playersNameTransforms[nodeId].gameObject);
+					playersNameTransforms.Remove(nodeId);
+				}
+				if(partofnames.arry[i].name == string.Empty)continue;
+
+				GOspinner.dicPlayerNamesIntString.Add(nodeId,partofnames.arry[i].name);
+				playersNameTransforms.Add
+				(nodeId,((Transform)Instantiate (pfPlayerName, bubbles[nodeId].position, Quaternion.identity)));
+				playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+					GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].name = "playerName" + nodeId +" " + GOspinner.dicPlayerNamesIntString[nodeId];
+				playersNameTransforms[nodeId].tag = "PlayerName";
+			}
+			changeHowToDisPlayPlayersName();
+		}
+
+		public static void scoreManager(CScommon.ScoreMsg scoreMsg)
+		{
+
+			for(int i=0; i < scoreMsg.arry.Length; i++)
+			{
+				int nodeId = scoreMsg.arry[i].nodeId;
+
+				if(scoreMsgGOspinner.ContainsKey(nodeId)) 
+				{
+					scoreMsgGOspinner.Remove(nodeId); 
+				}
+				if(nodeId == myNodeIndex)
+				{
+					if(scoreMsg.arry[i].neither0Winner1Loser2 == 1)
+					{
+						bubbles[nodeId].GetComponent<AudioSource>().clip = clipEatingOthers;
+						bubbles[nodeId].GetComponent<AudioSource>().Play();
+					}
+					if(scoreMsg.arry[i].neither0Winner1Loser2 == 2)
+					{
+						bubbles[nodeId].GetComponent<AudioSource>().clip = clipGetEatenByOthers;
+						bubbles[nodeId].GetComponent<AudioSource>().Play();
+					}
+				}
+
+				scoreMsgGOspinner.Add(nodeId,scoreMsg.arry[i]);// I don't need to delete any score from this dictionary
+
+				if(!stopwatches.ContainsKey(nodeId))
+				{
+					System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+					stopwatches.Add(nodeId,stopwatch);
+				}
+				stopwatches[nodeId].Reset();
+				stopwatches[nodeId].Start ();
+				//				if(!scoreMsg.zeroAteOne)continue;
+				//because even if some body go out of the game I set that node to have no name and if some body else take the same node
+				//I'll get scoreMsg with zero for this node and I'll replace previous score with new one which is zero.
+				displayNameChanger(nodeId);
+			}
+		}
+
+		public static void displayNamesManager()
+		{
+			foreach (int i in scoreMsgGOspinner.Keys)
+			{
+				displayNameChanger(i);
+			}
+		}
+		public static void displayNameChanger(int nodeId)
+		{
+			playersNameTransforms[nodeId].FindChild("playerNameMainCam").GetComponent<TextMesh>().text =
+				" " + GOspinner.dicPlayerNamesIntString[nodeId] +
+				"\n +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
+			//					+ " P" + currentPerformance(nodeId).ToString();
+			playersNameTransforms[nodeId].FindChild("playerNameMiniMap").GetComponent<TextMesh>().text =
+				" " + GOspinner.dicPlayerNamesIntString[nodeId]+": +" + scoreMsgGOspinner[nodeId].plus.ToString()+"    -" + scoreMsgGOspinner[nodeId].minus.ToString();
+			//					+ " P" + currentPerformance(nodeId).ToString();
+		}
+
+		public static float currentPerformance(int nodeId)
+		{
+			long delta = stopwatches[nodeId].ElapsedMilliseconds; //the amount of time, in milliseconds, since you last received a scoreMsg for this player
+			return Mathf.Round(scoreMsgGOspinner[nodeId].performance * Mathf.Pow(2,-delta/CScommon.performanceHalfLifeMilliseconds)* 100f) / 100f;
+		}
 
 		private static int displayNames = 0; // 0 display all, 1 display only on minimap, 2 display only on main scene, 3 don't displaythem
 		private static void changeHowToDisPlayPlayersName()
@@ -1075,6 +1114,10 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
+		#endregion
+
+		#region Gospinner.Update
+
 		static bool followingCamera = false;
 		static int cameraZoomOutAtStart = 80;
 		static int cameraFollowNodeIndex = 0;
@@ -1090,7 +1133,7 @@ public class netClientMgr : MonoBehaviour {
 //				return;
 //			}
 			//Ctrl + Click = choose my node, Ctrl + Shift + Click = dismount and be spectator
-			if ((Input.GetKey (KeyCode.LeftControl)|| Input.GetKey (KeyCode.LeftControl)) && Input.GetMouseButtonDown (0)
+			if ((Input.GetKey (KeyCode.LeftControl)|| Input.GetKey (KeyCode.LeftControl)) && Input.GetMouseButtonUp (0) && Input.touchCount < 2
 				&& !EventSystem.current.IsPointerOverGameObject())
 //			    &&!myChatInputField.isFocused)
 				ChoosingMyNode ();
@@ -1115,10 +1158,14 @@ public class netClientMgr : MonoBehaviour {
 				}
 	// all the things bellow this line are for player and all the things above it are for both player and spectator
 				if (myNodeIndex < 0) return;
+
+				//reversing my internal mus speed
 				if (Input.GetKeyDown(KeyCode.B))
 				{
 					MusSpeedController(-2 * myInternalMusSpeed);
 				}
+
+				//turn to left
 				if (Input.GetKeyDown(KeyCode.U))
 				{
 					CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
@@ -1126,6 +1173,7 @@ public class netClientMgr : MonoBehaviour {
 					myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 					Debug.Log ("Turn to Left");
 				}
+				//turn to right
 				if (Input.GetKeyDown(KeyCode.I))
 				{
 					CScommon.intMsg myDesiredRotationto= new CScommon.intMsg();
@@ -1133,6 +1181,7 @@ public class netClientMgr : MonoBehaviour {
 					myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 					Debug.Log ("Turn to Right");
 				}
+
 				//rotate to left
 				if (Input.GetKey(KeyCode.Z))
 				{
@@ -1163,6 +1212,10 @@ public class netClientMgr : MonoBehaviour {
 			requestToBlessThatNode();
 		}
 
+		#endregion
+
+		#region MusSpeedController
+
 		public static int myInternalMusSpeed = 80;
 		//static int myExternalMusSpeed = 80;
 		public static void MusSpeedController(int increaseOrDecreaseSpeed)
@@ -1187,20 +1240,26 @@ public class netClientMgr : MonoBehaviour {
 			Debug.Log ("My Internal Mus Speed: " + myInternalMusSpeed);
 		}
 	
+
+		#endregion
+
+		#region cameraMover
+
 		public static bool cameraFollowMynode = false;
 		static float mainCamMoveSpeed = 3.0f;
 //** need to clamp the camera so it cannot go over up/down/right/left.
 		static void cameraMover()
 		{
-			if (Input.GetAxis("Horizontal") != 0.0f &&!myChatInputField.isFocused)
-				{
-				mainCamera.transform.Translate(new Vector3((Input.GetAxis("Horizontal"))*camSpeed * Time.deltaTime,0,0));
-				}
-			if (Input.GetAxis("Vertical") != 0.0f&&!myChatInputField.isFocused)
-				{
-				mainCamera.transform.Translate(new Vector3(0,(Input.GetAxis("Vertical"))*camSpeed * Time.deltaTime,0));
-				}
+#if UNITY_STANDALONE || Unity_WEBPLAYER
 
+			if (Input.GetAxis("Horizontal") != 0.0f &&!myChatInputField.isFocused)
+			{
+				mainCamera.transform.Translate(new Vector3((Input.GetAxis("Horizontal"))*camSpeed * Time.deltaTime,0,0));
+			}
+			if (Input.GetAxis("Vertical") != 0.0f&&!myChatInputField.isFocused)
+			{
+				mainCamera.transform.Translate(new Vector3(0,(Input.GetAxis("Vertical"))*camSpeed * Time.deltaTime,0));
+			}
 			if (cameraFollowMynode && myNodeIndex >= 0 && bubbles[myNodeIndex].gameObject != null)
 			{	Vector3 playerDefualtCamPos = new Vector3 
 					(bubbles[myNodeIndex].transform.position.x,
@@ -1211,18 +1270,67 @@ public class netClientMgr : MonoBehaviour {
 			if (Input.GetKeyDown (KeyCode.C) && myNodeIndex != -1&&!myChatInputField.isFocused)
 			{
 				cameraFollowMynode = !cameraFollowMynode;
+				camLockBtn.image.color = cameraFollowMynode ? Color.green : Color.grey;
 			}
+
 			if (Input.GetKey (KeyCode.Q)&&!myChatInputField.isFocused)
 				zoomIn (2f);
 			else if (Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 				 zoomOut (2f);
+
+
+//#elif UNITY_IOS || UNITY_ANDROID || UNITY_WP8 || UNITY_IPHONE  ||  UNITY_EDITOR
+			if (Input.touchCount == 1 && !EventSystem.current.IsPointerOverGameObject())
+			{
+				cameraFollowMynode = false;
+				Touch touchZero = Input.GetTouch(0);
+				if(touchZero.phase == TouchPhase.Moved)
+				{
+					Vector2 prvsPos = touchZero.position - touchZero.deltaPosition;
+					mainCamera.transform.Translate(prvsPos * -.01f);//touchZero.deltaPosition * -0.02f);
+					Debug.Log(touchZero.deltaPosition);
+				}
+			}
+
+			if (Input.touchCount == 2) 
+			{
+				cameraFollowMynode = false;
+				Vector2 cameraViewSize = new Vector2 (mainCamera.pixelWidth, mainCamera.pixelHeight);
+				Touch touchZero = Input.GetTouch(0);
+				Touch touchOne = Input.GetTouch(1);
+
+				// Find the position in the previous frame of each touch.
+				Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
+				Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
+
+				// Find the magnitude of the vector (the distance) between the touches in each frame.
+				float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
+				float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
+
+				// Find the difference in the distances between each frame.
+				float deltaMagnitudeDiff = (prevTouchDeltaMag - touchDeltaMag) / 6.0f;
+				Debug.Log("pinch for mobile zooming" + deltaMagnitudeDiff);
+
+				mainCamera.transform.position += mainCamera.transform.TransformDirection((touchZeroPrevPos + touchOnePrevPos - cameraViewSize) * mainCamera.orthographicSize / cameraViewSize.y);
+				if (deltaMagnitudeDiff > 0.0f)
+				{
+					zoomOut(deltaMagnitudeDiff);
+				}
+				if (deltaMagnitudeDiff < 0.0f)
+				{
+					zoomIn(deltaMagnitudeDiff * -1);
+				}
+				mainCamera.transform.position -= mainCamera.transform.TransformDirection((touchZero.position + touchOne.position - cameraViewSize) * mainCamera.orthographicSize / cameraViewSize.y);
+			}
+#endif
+
 //			 to let Spectator follow one node
 			if (spectating)
 			{
 				if(Input.anyKey && !Input.GetMouseButton(0) && !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.E)&&!myChatInputField.isFocused)
 					followingCamera = false;
 
-				if (Input.GetMouseButtonDown (0)&&!myChatInputField.isFocused)
+				if (Input.GetMouseButtonUp (0) && Input.touchCount < 2 && !myChatInputField.isFocused)
 				{
 					cameraFollowNodeIndex = closestBubbleIndexNumber();
 					followingCamera = true;
@@ -1250,6 +1358,9 @@ public class netClientMgr : MonoBehaviour {
 //			mainCamera.transform.position.x = Mathf.Clamp(mainCamera.transform.position.x, -200.0f,200.0f)
 		}
 
+		#endregion
+
+		#region zoomIn, zoomOut
 		static void zoomIn(float camorthsizeminus) {
 			if (mainCamera.orthographicSize > 14.0f)
 			{
@@ -1276,6 +1387,15 @@ public class netClientMgr : MonoBehaviour {
 			}
 		}
 
+		static void zoomInMobile(float camorthsizplus)
+		{
+			cameraFollowMynode = false;
+
+		}
+		static void zoomOutMobile(float camorthsizplus)
+		{
+
+		}
 //
 //		public void resetCam()
 //		{
@@ -1302,7 +1422,9 @@ public class netClientMgr : MonoBehaviour {
 //				yield return 0;
 //			}    
 //		}
+		#endregion
 
+		#region choosingMyNode
 		static void ChoosingMyNode()
 		{
 			CScommon.intMsg myDesiredNodeIndexNumber= new CScommon.intMsg();
@@ -1314,6 +1436,9 @@ public class netClientMgr : MonoBehaviour {
 			Debug.Log("my desired node " + myDesiredNodeIndexNumber.value);
 			
 		}
+		#endregion
+
+		#region requestLinktoTarget
 		//for requesting to have a specefic type of a link from 'me' to the node that is closest node 
 		//to the position that I have clicked on.
 		internal static void requestLinktoTarget()
@@ -1332,9 +1457,15 @@ public class netClientMgr : MonoBehaviour {
 				return;
 			}
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
-			if ((Input.GetMouseButtonDown (0) || Input.GetMouseButtonDown (1))
+			if ((Input.GetMouseButtonUp (0) || Input.GetMouseButtonUp (1)) && Input.touchCount < 2
 			    && !(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
 				&& !EventSystem.current.IsPointerOverGameObject())
+
+//			if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
+//			{
+//				return;
+//			}
+
 //			    && !myChatInputField.isFocused)
 
 				// && myClient != null && myClient.isConnected && gameIsRunning) 
@@ -1359,21 +1490,24 @@ public class netClientMgr : MonoBehaviour {
 //#endif
 		}
 
+		#endregion
+
+		#region requestToBlessThatNode
 		internal static void requestToBlessThatNode()
 		{
-			CScommon.intMsg nim = new CScommon.intMsg ();
-
-			if (Input.GetMouseButtonDown (0)
+			if (Input.GetMouseButtonUp (0) && Input.touchCount < 2
 			    && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
 			    && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{
+				CScommon.intMsg nim = new CScommon.intMsg ();
 				nim.value = GOspinner.closestBubbleIndexNumber ();
 				myClient.Send (CScommon.blessMsgType, nim);
 			//	audioSourceBeepSelectNodeForLink.Play ();
 			}
 		}
+		#endregion
 
-		//static void requestToRotateMe(vectore3 rightClickMousePosition)
+		#region requestToRotateMe
 		internal static void requestToRotateMe(int rotateToLminus1Rplus1)
 		{
 //			Vector3 mousePosInWorldCordV3 = mouseWorldPostion();
@@ -1401,6 +1535,9 @@ public class netClientMgr : MonoBehaviour {
 			audioSourceTurning.Play ();
 			myClient.Send (CScommon.turnMsgType, myDesiredRotationto);
 		}
+		#endregion
+
+		#region handyfunctions
 
 		public static float stdAngle(float angl)
 		{	while (angl < -Mathf.PI) angl += 2*Mathf.PI;
@@ -1474,5 +1611,7 @@ public class netClientMgr : MonoBehaviour {
 				totMsgsLost = numUpdates = 0;
 			}
 		}
+		#endregion
 	}
 }
+
