@@ -266,7 +266,7 @@ public class netClientMgr : MonoBehaviour {
 	{
 	if (myClient != null && myClient.isConnected) 
 		{
-			GUI.Label (new Rect (2, 25, 200, 100), "KeyGuide(F1)");
+//			GUI.Label (new Rect (2, 25, 200, 100), "KeyGuide(F1)");
 
 			if (Input.GetKey (KeyCode.F1)&&!myChatInputField.isFocused)
 			GUI.Label (new Rect (2, 40, 320, 600),
@@ -448,7 +448,10 @@ public class netClientMgr : MonoBehaviour {
 			GOspinner.cameraFollowMynode = false;
 			spectating = true;
 		}
+		GOspinner.nodeIdMsgg();
 		Debug.Log ("my nodeIndex is " + myNodeIndex);
+
+
 //		debugingDesplayinScrollView ("   my nodeIndex is " + myNodeIndex);
 	}
 
@@ -700,23 +703,12 @@ public class netClientMgr : MonoBehaviour {
 			} else if (CScommon.testBit (nd.dna, CScommon.snarkBit)){	
 				managePrefabTagNameBoolAddtrueRepfalse (i, pfSnark, bblCloneTag, bblCloneName, add);
 				return;
-			} else if (CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) 
-			{
-				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
-				{
-					managePrefabTagNameBoolAddtrueRepfalse (i, pfMyTeamPlayer, bblCloneTag, bblCloneName, add);
-					return;
-				}
-				else
-				managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamPlayer, bblCloneTag, bblCloneName, add);
-				return;
-			}else if (CScommon.testBit (nd.dna, CScommon.playerBit)) { // && !CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) {
-				managePrefabTagNameBoolAddtrueRepfalse (i, pfReservdPlayerBubble, bblCloneTag, bblCloneName, add);
-				return;
+			} 
 
-			} else if (CScommon.testBit (nd.dna, CScommon.goalBit)) 
+
+			else if (CScommon.testBit (nd.dna, CScommon.goalBit)) 
 			{
-				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
+				if (teamNumCheck(nd.dna) == 1)
 				{
 					managePrefabTagNameBoolAddtrueRepfalse (i, pfOurGoal, goalTag, goalName, add);
 					return;
@@ -724,7 +716,57 @@ public class netClientMgr : MonoBehaviour {
 				else
 					managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamGoal, bblCloneTag, bblCloneName, add);
 				return;
-			} else if (CScommon.testBit (nd.dna, CScommon.eaterBit)) {
+			} 
+
+
+			else if (teamNumCheck(nd.dna) == 1)
+			{
+				Debug.Log("teamnum" + teamNumCheck(nd.dna));// + " "+ teamNumCheck(initMsg.nodeData[myNodeIndex].dna));
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfMyTeamPlayer, bblCloneTag, bblCloneName, add);
+				return;
+			}
+			else if(teamNumCheck(nd.dna) > 1)
+			{
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamPlayer, bblCloneTag, bblCloneName, add);
+				return;
+			}
+
+//
+//			else if (CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) 
+//			{
+////				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
+//				if (teamNumCheck(nd.dna) == 1)
+//				{
+//					Debug.Log("teamnum" + teamNumCheck(nd.dna));// + " "+ teamNumCheck(initMsg.nodeData[myNodeIndex].dna));
+//					managePrefabTagNameBoolAddtrueRepfalse (i, pfMyTeamPlayer, bblCloneTag, bblCloneName, add);
+//					return;
+//				}
+////				else if (teamNumCheck(nd.dna) == 4)
+////				{
+////					
+////				}
+//				Debug.Log("teamnum" + teamNumCheck(nd.dna));// + " "+ teamNumCheck(initMsg.nodeData[myNodeIndex].dna) );
+//				managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamPlayer, bblCloneTag, bblCloneName, add);
+//				return;
+//			}
+			else if (CScommon.testBit (nd.dna, CScommon.playerBit)) { // && !CScommon.testBit (nd.dna, CScommon.playerPlayingBit)) {
+				managePrefabTagNameBoolAddtrueRepfalse (i, pfReservdPlayerBubble, bblCloneTag, bblCloneName, add);
+				return;
+
+			}
+
+//			else if (CScommon.testBit (nd.dna, CScommon.goalBit)) 
+//			{
+//				if (myNodeIndex >= 0 && (teamNumCheck(nd.dna) == teamNumCheck(initMsg.nodeData[myNodeIndex].dna)))
+//				{
+//					managePrefabTagNameBoolAddtrueRepfalse (i, pfOurGoal, goalTag, goalName, add);
+//					return;
+//				}
+//				else
+//					managePrefabTagNameBoolAddtrueRepfalse (i, pfOTeamGoal, bblCloneTag, bblCloneName, add);
+//				return;
+//			} 
+			else if (CScommon.testBit (nd.dna, CScommon.eaterBit)) {
 				managePrefabTagNameBoolAddtrueRepfalse (i, pfEaterBubble, bblCloneTag, bblCloneName, add);
 				return;
 
@@ -753,6 +795,22 @@ public class netClientMgr : MonoBehaviour {
 		}
 
 		#endregion
+		public static void nodeIdMsgg()
+		{
+//			if(dicPlayerNamesIntString.ContainsKey(myNodeIndex))
+//			{
+//				Destroy(playersNameTransforms[myNodeIndex].gameObject);
+//				dicPlayerNamesIntString.Remove(myNodeIndex);
+//				playersNameTransforms.Remove(myNodeIndex);
+//			}
+			//updating initmsg with new changes that I get from initrevmessage
+			if (bubbles[myNodeIndex].gameObject != null)
+			//destorying gameobjects that are going to be updated
+			Destroy (bubbles[myNodeIndex].gameObject);
+			//instantiating new gameobjects according to initRivisionMsg
+			nodePrefabCheck(myNodeIndex, false);
+		}
+
 
 		#region initRev & updateMsg manager
 		public static void initRevisionMsgg(CScommon.InitRevisionMsg initrevmassege)
