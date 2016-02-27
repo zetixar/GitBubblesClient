@@ -1322,7 +1322,7 @@ public class netClientMgr : MonoBehaviour {
 //** need to clamp the camera so it cannot go over up/down/right/left.
 		static void cameraMover()
 		{
-#if UNITY_STANDALONE || Unity_WEBPLAYER
+//#if UNITY_STANDALONE || Unity_WEBPLAYER
 
 			if (Input.GetAxis("Horizontal") != 0.0f &&!myChatInputField.isFocused)
 			{
@@ -1394,7 +1394,7 @@ public class netClientMgr : MonoBehaviour {
 				}
 				mainCamera.transform.position -= mainCamera.transform.TransformDirection((touchZero.position + touchOne.position - cameraViewSize) * mainCamera.orthographicSize / cameraViewSize.y);
 			}
-#endif
+//#endif
 
 //			 to let Spectator follow one node
 			if (spectating)
