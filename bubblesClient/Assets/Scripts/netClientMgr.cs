@@ -25,9 +25,10 @@ public class netClientMgr : MonoBehaviour {
 
 	public InputField serverIPInputField;
 //	public string serverIP = "192.168.0.2";
-	public string serverIP = "52.90.140.113";//"52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer //Mac: 169.254.191.54
+	public string serverIP = "169.254.143.203";//"52.90.140.113";//"52.91.177.74";// "127.0.0.1"; 52.90.62.24 xlargeServer //Mac: 169.254.191.54 // 169.254.143.203
 	public InputField playerNickNameInputField;
 	private string playerNickName;
+	public string hello;
 
 	private static string myChatString;
 
