@@ -53,8 +53,6 @@ public class netClientMgr : MonoBehaviour {
 	public Text speedValueText;
 
 	public static Button camLockBtn;
-	public static Button blessingModeBtn;
-	public static Button pusherLinkBtn;
 
 	public Image minimapImage;
 	public Button keyGuide;
@@ -91,14 +89,10 @@ public class netClientMgr : MonoBehaviour {
 		myChatInputField = GameObject.Find("ChatInput").GetComponent<InputField>();
 		speedSlider = GameObject.Find("SpeedSlider").GetComponent<Slider>();
 		camLockBtn = GameObject.Find("camLockBtn").GetComponent<Button>();
-		blessingModeBtn = GameObject.Find("blessingModeBtn").GetComponent<Button>();
-		pusherLinkBtn = GameObject.Find("pusherLinkBtn").GetComponent<Button>();
 
 		myChatInputField.gameObject.SetActive(false);
 		speedSlider.gameObject.SetActive(false);
 		camLockBtn.gameObject.SetActive(false);
-		blessingModeBtn.gameObject.SetActive(false);
-		pusherLinkBtn.gameObject.SetActive(false);
 
 		audioSourceBeepSelectNodeForLink = AddAudio(clipBeepSelectNodeForLink,false,false,0.5f);
 		audioSourceTurning = AddAudio(clipTurning,false,false,0.15f);
@@ -228,9 +222,6 @@ public class netClientMgr : MonoBehaviour {
 		GOspinner.settingUpTheScene();
 		speedSlider.gameObject.SetActive(false);
 		camLockBtn.gameObject.SetActive(false);
-		blessingModeBtn.gameObject.SetActive(false);
-		pusherLinkBtn.gameObject.SetActive(false);
-
 		minimapImage.gameObject.SetActive(false);
 		keyGuide.gameObject.SetActive(false);
 		keyGuideImage.gameObject.SetActive(false);
@@ -447,9 +438,6 @@ public class netClientMgr : MonoBehaviour {
 		myNodeIndex = nodeIndexMsg.value;
 		speedSlider.gameObject.SetActive(true);
 		camLockBtn.gameObject.SetActive(true);
-		blessingModeBtn.gameObject.SetActive(true);
-		pusherLinkBtn.gameObject.SetActive(true);
-
 		speedSlider.value = GOspinner.myInternalMusSpeed;
 		spectating = false;
 		GOspinner.cameraFollowMynode = true;
@@ -457,8 +445,6 @@ public class netClientMgr : MonoBehaviour {
 		{
 			speedSlider.gameObject.SetActive(false);
 			camLockBtn.gameObject.SetActive(false);
-			blessingModeBtn.gameObject.SetActive(false);
-			pusherLinkBtn.gameObject.SetActive(false);
 
 			GOspinner.cameraFollowMynode = false;
 			spectating = true;
@@ -804,7 +790,7 @@ public class netClientMgr : MonoBehaviour {
 
 			else
 				{bubbles [i] = ((Transform)Instantiate (prefab, Vector3.zero, Quaternion.identity));}
-			bubbles[i].localScale = new Vector3(nd.radius*nodeSclaeFactor, nd.radius *nodeSclaeFactor, nd.radius*nodeSclaeFactor);
+			bubbles[i].localScale = new Vector3(nd.radius*nodeSclaeFactor, nd.radius *nodeSclaeFactor, 0);
 			bubbles[i].tag = tag;
 			bubbles[i].name = name + i;
 		}
@@ -1050,7 +1036,7 @@ public class netClientMgr : MonoBehaviour {
 			}
 			foreach(int playerID in playersNameTransforms.Keys)
 			{
-				playersNameTransforms[playerID].position = new Vector2(bubbles [playerID].position.x,bubbles [playerID].position.y + initMsg.nodeData[playerID].radius* 1.20f) ;
+				playersNameTransforms[playerID].position = bubbles [playerID].position;
 			}
 		}
 
@@ -1360,8 +1346,8 @@ public class netClientMgr : MonoBehaviour {
 				if(touchZero.phase == TouchPhase.Moved)
 				{
 					Vector2 prvsPos = touchZero.position - touchZero.deltaPosition;
-					mainCamera.transform.Translate(touchZero.deltaPosition * -1f);//touchZero.deltaPosition * -0.02f);
-					Debug.Log("touchZero.deltaPosition: " + touchZero.deltaPosition +"touchZero.position: "+ touchZero.position + "prvsPos: " + prvsPos );
+					mainCamera.transform.Translate(prvsPos * -.01f);//touchZero.deltaPosition * -0.02f);
+					Debug.Log(touchZero.deltaPosition);
 				}
 			}
 
@@ -1512,8 +1498,6 @@ public class netClientMgr : MonoBehaviour {
 		#endregion
 
 		#region requestLinktoTarget
-
-		public static bool pushLinkMode = false;
 		//for requesting to have a specefic type of a link from 'me' to the node that is closest node 
 		//to the position that I have clicked on.
 		internal static void requestLinktoTarget()
@@ -1534,7 +1518,7 @@ public class netClientMgr : MonoBehaviour {
 //#if UNITY_EDITOR || UNITY_STANDALONE || Unity_WEBPLAYER
 			if ((Input.GetMouseButtonUp (0) || Input.GetMouseButtonUp (1)) && Input.touchCount < 2
 			    && !(Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-				&& (!EventSystem.current.IsPointerOverGameObject() || pushLinkMode))
+				&& !EventSystem.current.IsPointerOverGameObject())
 
 //			if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
 //			{
@@ -1545,13 +1529,11 @@ public class netClientMgr : MonoBehaviour {
 
 				// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{	//On serverside if I send my own nodeId as the target I'll have no external link
-
-				Debug.Log("inputcount = " + Input.touchCount);
 				nim.nodeIndex = GOspinner.closestBubbleIndexNumber ();
 				nim.linkType = CScommon.LinkType.puller;
 				nim.hand = 0;
 				if (Input.GetMouseButtonDown (1))nim.hand = 1;
-				if ((Input.GetKey(KeyCode.Space) || pushLinkMode) &&!myChatInputField.isFocused)
+				if (Input.GetKey(KeyCode.Space)&&!myChatInputField.isFocused)
 					nim.linkType = CScommon.LinkType.pusher;
 				myClient.Send (CScommon.targetNodeType, nim);
 				audioSourceBeepSelectNodeForLink.Play ();
@@ -1570,21 +1552,15 @@ public class netClientMgr : MonoBehaviour {
 		#endregion
 
 		#region requestToBlessThatNode
-
-		public static bool blessingMode = false;
-
 		internal static void requestToBlessThatNode()
 		{
 			if (Input.GetMouseButtonUp (0) && Input.touchCount < 2
-				&& ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-					&& !myChatInputField.isFocused) ||
-				(Input.touchCount == 2 && blessingMode))     // && myClient != null && myClient.isConnected && gameIsRunning) 
+			    && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+			    && !myChatInputField.isFocused)// && myClient != null && myClient.isConnected && gameIsRunning) 
 			{
 				CScommon.intMsg nim = new CScommon.intMsg ();
 				nim.value = GOspinner.closestBubbleIndexNumber ();
 				myClient.Send (CScommon.blessMsgType, nim);
-				Debug.Log("bless" +nim.value);
-
 			//	audioSourceBeepSelectNodeForLink.Play ();
 			}
 		}
